@@ -1,17 +1,22 @@
-require("dotenv").config();
-const express = require("express");
-const mongoose = require("mongoose");
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
 
 const app = express();
-const routes = require("./src/routes");
+require('./src/setup/db');
+
+const routes = require('./src/routes');
+const authMiddleware = require('./src/setup/auth');
 const port = process.env.PORT || 3000;
 
-var uri = "mongodb://localhost:27017/barber"
-mongoose.connect(
-    uri, {useNewUrlParser: true}
-);
-
+app.use(cors());
+app.use(express.json());
+app.use(authMiddleware);
 app.use(routes);
+
 app.listen(port, () => {
-    console.log(`Servidor rodando na porta ${port}`);
+  console.log('🔥🔥🔥🔥🔥🔥🔥🔥🔥');
+  console.info(`Servidor rodando na porta ${port}`);
+  console.log('🔥🔥🔥🔥🔥🔥🔥🔥🔥');
+  console.info('Faça bom proveito do sistema de agendamentos 🚀📅💈');
 });
