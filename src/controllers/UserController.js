@@ -1,5 +1,11 @@
 const mongoose = require('mongoose');
 const User = mongoose.model('User');
+const errorHandler = require('./errorHandler');
+const validateFields = async (...fields) => {
+  if (!fields) {
+    return new error('ei, um campo está inválido!');
+  }
+};
 
 module.exports = {
   async show(req, res) {
@@ -7,15 +13,15 @@ module.exports = {
       .then((user) => {
         return res.json(user);
       })
-      .catch((error) => res.status(500).send(error));
+      .catch((error) => errorHandler(error, res));
   },
 
   async create(req, res) {
     return await User.create(req.body)
       .then((user) => {
-        return res.json(user);
+        return res.status(201).json(user);
       })
-      .catch((error) => res.status(500).send(error));
+      .catch((error) => errorHandler(error, res));
   },
 
   async update(req, res) {
@@ -25,7 +31,7 @@ module.exports = {
       .then((user) => {
         return res.json(user);
       })
-      .catch((error) => res.status(500).send(error));
+      .catch((error) => errorHandler(error, res));
   },
 
   async remove(req, res) {
@@ -37,25 +43,28 @@ module.exports = {
       .then((user) => {
         return res.json({ id: user.id });
       })
-      .catch((error) => res.status(500).send(error));
+      .catch((error) => errorHandler(error, res));
   },
 
   async addSpecialOpening(req, res) {
-    return User.findById(req.params.id).then((user) => {
-      const specialOpening = user.specialOpening;
-      const newSpecialOpening = req.body;
-      specialOpening.push(newSpecialOpening);
+    return User.findById(req.params.id)
+      .select('specialOpening')
+      .then((response) => {
+        const specialOpening = response;
+        const newSpecialOpening = req.body;
+        specialOpening.push(newSpecialOpening);
 
-      return User.findByIdAndUpdate(
-        req.params.id,
-        { specialOpening: specialOpening },
-        { new: true }
-      )
-        .then((user) => {
-          return res.send(user.specialOpening);
-        })
-        .catch((error) => res.status(500).send(error));
-    });
+        return User.findByIdAndUpdate(
+          req.params.id,
+          { specialOpening: specialOpening },
+          { new: true }
+        )
+          .then((user) => {
+            return res.send(user.specialOpening);
+          })
+          .catch((error) => errorHandler(error, res));
+      })
+      .catch((error) => errorHandler(error, res));
   },
 
   async login(req, res) {

@@ -1,6 +1,25 @@
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
 
+const HorarioSchema = new mongoose.Schema({
+  from: { type: String, required: true },
+  to: { type: String, required: true },
+});
+
+const OpeningSchema = new mongoose.Schema({
+  monday: HorarioSchema,
+  tuesday: HorarioSchema,
+  wednesday: HorarioSchema,
+  thursday: HorarioSchema,
+  saturday: HorarioSchema,
+  sunday: HorarioSchema,
+});
+
+const ServiceSchema = new mongoose.Schema({
+  serviceName: { type: String, required: true },
+  serviceTime: { type: String, required: true },
+});
+
 const UserSchema = new mongoose.Schema(
   {
     _id: {
@@ -9,49 +28,28 @@ const UserSchema = new mongoose.Schema(
     },
     username: {
       type: String,
-      unique: true,
-      required: true,
+      unique: [true, 'nome de usuário já em uso'],
+      required: [true, 'digite um nome de usuário!'],
     },
     password: {
       type: String,
       min: 6,
-      required: true,
+      required: [true, 'digite uma senha!'],
     },
-    services: Array,
-    professionals: Array,
+    // services: [ServiceSchema],
+    // services: Array,
+    // professionals: Array,
+    // opening: OpeningSchema,
     opening: {
-      monday: {
-        from: { type: String },
-        to: { type: String },
-      },
-      tuesday: {
-        from: { type: String },
-        to: { type: String },
-      },
-      wednesday: {
-        from: { type: String },
-        to: { type: String },
-      },
-      thursday: {
-        from: { type: String },
-        to: { type: String },
-      },
-      saturday: {
-        from: { type: String },
-        to: { type: String },
-      },
-      sunday: {
-        from: { type: String },
-        to: { type: String },
-      },
+      day: Number,
     },
-    specialOpening: [{ from: String, to: String }],
+    // specialOpening: [HorarioSchema],
     isAdmin: { type: Boolean, default: false, select: false },
   },
   {
-    toJSON: { virtuals: true, getters: true },
-    toObject: { virtuals: true, getters: true },
+    toJSON: { virtuals: true, getters: true, setters: true },
+    toObject: { virtuals: true, getters: true, setters: true },
   }
 );
 
-mongoose.model('User', UserSchema);
+mongoose.model('User', UserSchema, 'users');

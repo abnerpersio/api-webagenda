@@ -17,7 +17,7 @@ module.exports = async (req, res, next) => {
         };
         return next();
       } else {
-        return res.status(401).end('NÃO AUTENTICADO!');
+        return res.status(403).end('NAO AUTENTICADO!');
       }
     })
     .catch((error) => {

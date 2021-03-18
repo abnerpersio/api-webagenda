@@ -3,7 +3,7 @@ const express = require('express');
 const routes = express.Router();
 
 const UserController = require('./controllers/UserController');
-const EventController = require('./controllers/EventController');
+const ScheduleController = require('./controllers/ScheduleController');
 
 const adminVerify = (req, res, next) => {
   if (
@@ -12,7 +12,7 @@ const adminVerify = (req, res, next) => {
   ) {
     next();
   } else {
-    return res.status(401).end('EI, VOCÊ NÃO ESTÁ AUTORIZADO NESSA ROTA!');
+    return res.status(401).end('EI, VOCE NAO ESTA AUTORIZADO NESSA ROTA!');
   }
 };
 
@@ -24,12 +24,16 @@ routes.post('/users', adminVerify, UserController.create);
 routes.put('/users/:id', adminVerify, UserController.update);
 routes.post('/users/:id/horarios', UserController.addSpecialOpening);
 
-routes.get('/users/login', UserController.login);
+routes.get('/login', UserController.login);
 
-routes.get('/events', EventController.list);
-routes.get('/events/:id', EventController.show);
-routes.post('/events', EventController.create);
-routes.put('/events', EventController.update);
-routes.delete('/events', EventController.delete);
+// routes.get('/events', ScheduleController.list);
+// routes.get('/events/:id', ScheduleController.show);
+// routes.post('/events', ScheduleController.create);
+// routes.put('/events', ScheduleController.update);
+// routes.delete('/events', ScheduleController.delete);
+
+routes.use('*', (req, res) =>
+  res.status(404).json({ message: 'Rota não encontrada!' })
+);
 
 module.exports = routes;

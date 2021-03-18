@@ -4,8 +4,8 @@
   "description": "API",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node server.js > server.log 2> errors.log",
+    "dev": "nodemon server.js > dev-server.log 2> dev-errors.log"
   },
   "keywords": [],
   "author": "",
@@ -15,7 +15,7 @@
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "moment": "^2.29.1",
-    "mongoose": "^5.11.17",
+    "mongoose": "^5.11.15",
     "uuid": "^8.3.2"
   },
   "devDependencies": {

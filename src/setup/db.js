@@ -6,9 +6,14 @@ const dbpass = process.env.DBPASS;
 const dburl = process.env.DBURL;
 const uri = `mongodb+srv://${dbuser}:${dbpass}@${dburl}`;
 
-mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(uri, {
+  useNewUrlParser: true,
+  useFindAndModify: false,
+  // useCreateIndex: true,
+  useUnifiedTopology: true,
+});
 
 require('../models/user');
-require('../models/event');
+require('../models/schedule');
 const User = mongoose.model('User');
-const Event = mongoose.model('Event');
+const Schedule = mongoose.model('Schedule');
