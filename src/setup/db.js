@@ -9,11 +9,9 @@ const uri = `mongodb+srv://${dbuser}:${dbpass}@${dburl}`;
 mongoose.connect(uri, {
   useNewUrlParser: true,
   useFindAndModify: false,
-  // useCreateIndex: true,
+  useCreateIndex: true,
   useUnifiedTopology: true,
 });
 
 require('../models/user');
-require('../models/schedule');
 const User = mongoose.model('User');
-const Schedule = mongoose.model('Schedule');

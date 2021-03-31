@@ -1,24 +1,40 @@
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
 
-const HorarioSchema = new mongoose.Schema({
-  from: { type: String, required: true },
-  to: { type: String, required: true },
+const HorarioSchema = new mongoose.Schema(
+  {
+    from: { type: String, required: true },
+    to: { type: String, required: true },
+  },
+  { _id: false }
+);
+
+const EventSchema = new mongoose.Schema({
+  clientName: { type: String, required: true },
+  service: { type: String, required: true },
+  professional: { type: String, required: true },
+  horario: HorarioSchema,
 });
 
-const OpeningSchema = new mongoose.Schema({
-  monday: HorarioSchema,
-  tuesday: HorarioSchema,
-  wednesday: HorarioSchema,
-  thursday: HorarioSchema,
-  saturday: HorarioSchema,
-  sunday: HorarioSchema,
-});
+const OpeningSchema = new mongoose.Schema(
+  {
+    monday: HorarioSchema,
+    tuesday: HorarioSchema,
+    wednesday: HorarioSchema,
+    thursday: HorarioSchema,
+    saturday: HorarioSchema,
+    sunday: HorarioSchema,
+  },
+  { _id: false }
+);
 
-const ServiceSchema = new mongoose.Schema({
-  serviceName: { type: String, required: true },
-  serviceTime: { type: String, required: true },
-});
+const ServiceSchema = new mongoose.Schema(
+  {
+    serviceName: { type: String, required: true },
+    serviceTime: { type: String, required: true },
+  },
+  { _id: false }
+);
 
 const UserSchema = new mongoose.Schema(
   {
@@ -28,7 +44,7 @@ const UserSchema = new mongoose.Schema(
     },
     username: {
       type: String,
-      unique: [true, 'nome de usuário já em uso'],
+      unique: true,
       required: [true, 'digite um nome de usuário!'],
     },
     password: {
@@ -36,14 +52,11 @@ const UserSchema = new mongoose.Schema(
       min: 6,
       required: [true, 'digite uma senha!'],
     },
-    // services: [ServiceSchema],
-    // services: Array,
-    // professionals: Array,
-    // opening: OpeningSchema,
-    opening: {
-      day: Number,
-    },
-    // specialOpening: [HorarioSchema],
+    professionals: Array,
+    services: [ServiceSchema],
+    opening: OpeningSchema,
+    specialOpening: [HorarioSchema],
+    schedule: [EventSchema],
     isAdmin: { type: Boolean, default: false, select: false },
   },
   {

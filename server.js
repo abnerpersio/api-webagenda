@@ -6,7 +6,7 @@ const app = express();
 require('./src/setup/db');
 
 const routes = require('./src/routes');
-const authMiddleware = require('./src/setup/auth');
+const authMiddleware = require('./src/setup/auth').authMiddleware;
 const logger = require('./src/setup/logger');
 const port = process.env.PORT || 3000;
 

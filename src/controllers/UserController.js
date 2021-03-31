@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const User = mongoose.model('User');
-const errorHandler = require('./errorHandler');
+
+const errorHandler = require('../functions/errorHandler');
 const validateFields = async (...fields) => {
   if (!fields) {
     return new error('ei, um campo está inválido!');
@@ -10,64 +11,51 @@ const validateFields = async (...fields) => {
 module.exports = {
   async show(req, res) {
     return await User.findById(req.params.id)
-      .then((user) => {
-        return res.json(user);
-      })
+      .then((user) => res.json(user))
       .catch((error) => errorHandler(error, res));
   },
 
   async create(req, res) {
     return await User.create(req.body)
-      .then((user) => {
-        return res.status(201).json(user);
-      })
+      .then((user) => res.status(201).json(user))
       .catch((error) => errorHandler(error, res));
   },
 
   async update(req, res) {
-    return await User.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    })
-      .then((user) => {
-        return res.json(user);
-      })
+    return await User.findByIdAndUpdate(req.params.id, req.body, { new: true })
+      .then((user) => res.json(user))
       .catch((error) => errorHandler(error, res));
-  },
-
-  async remove(req, res) {
-    return res.send('teste');
   },
 
   async findIdByName(req, res) {
     return await User.findOne({ username: req.query.username })
-      .then((user) => {
-        return res.json({ id: user.id });
-      })
+      .then((user) => res.json({ id: user.id }))
       .catch((error) => errorHandler(error, res));
   },
 
   async addSpecialOpening(req, res) {
-    return User.findById(req.params.id)
-      .select('specialOpening')
-      .then((response) => {
-        const specialOpening = response;
-        const newSpecialOpening = req.body;
-        specialOpening.push(newSpecialOpening);
+    const { id } = req.params;
+    const user = await User.findById(id).select('specialOpening');
+    user.specialOpening.push(req.body);
 
-        return User.findByIdAndUpdate(
-          req.params.id,
-          { specialOpening: specialOpening },
-          { new: true }
-        )
-          .then((user) => {
-            return res.send(user.specialOpening);
-          })
-          .catch((error) => errorHandler(error, res));
+    return await user
+      .save()
+      .then((updated) => {
+        return res.json(updated.specialOpening);
       })
       .catch((error) => errorHandler(error, res));
   },
 
-  async login(req, res) {
-    return res.json(res.locals.authUser);
+  async addService(req, res) {
+    const { id } = req.params;
+    const user = await User.findById(id).select('services');
+    user.services.push(req.body);
+
+    return await user
+      .save()
+      .then((updated) => {
+        return res.json(updated.services);
+      })
+      .catch((error) => errorHandler(error, res));
   },
 };

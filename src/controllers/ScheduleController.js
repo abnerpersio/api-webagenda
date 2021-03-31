@@ -1,36 +1,114 @@
 const mongoose = require('mongoose');
-const Schedule = mongoose.model('Schedule');
+const User = mongoose.model('User');
+
+const errorHandler = require('../functions/errorHandler');
+const validateFields = async (...fields) => {
+  if (!fields) {
+    return new error('ei, um campo está inválido!');
+  }
+};
+
+const sendDataError = (data, res) => {
+  return res.status(400).send(`${data} não encontrado!`);
+};
 
 module.exports = {
   async show(req, res) {
-    const { id, event } = req.query;
-    return await Schedule.findById(id)
+    const { id } = req.auth;
+    const { event } = req.params;
+    if (!id) sendDataError('Id do usuário', res);
+    if (!event) sendDataError('Evento', res);
+
+    return User.findOne({
+      $and: [{ _id: id }, { 'schedule._id': event }],
+    })
+      .select('schedule')
       .then((user) => {
-        return res.json(user.event);
+        if (!user) sendDataError('Evento', res);
+
+        const indexShow = user.schedule.findIndex(
+          (eventSchedule) => eventSchedule._id == event
+        );
+        return res.json(user.schedule[indexShow]);
       })
-      .catch((error) => {
-        return res.status(500).send(error);
-      });
+      .catch((error) => errorHandler(error, res));
   },
 
   async list(req, res) {
-    const { id } = req.query;
-    if (!id) res.status(400).send('Id do usuário não identificiado');
+    const { id } = req.auth;
+    if (!id) sendDataError('Id do usuário', res);
 
-    return await Schedule.find(req.query.id)
-      .then((response) => res.json(response))
-      .catch((error) => res.status(500).send(error));
+    return await User.findById(id)
+      .select('schedule')
+      .then((user) => res.json(user?.schedule))
+      .catch((error) => errorHandler(error, res));
   },
 
   async create(req, res) {
-    return await Schedule.create(req.body)
-      .then((evento) => {
-        return res.send(evento);
+    const { id } = req.auth;
+    if (!id) sendDataError('Id do usuário', res);
+
+    const user = await User.findById(id)
+      .select('schedule')
+      .catch((error) => errorHandler(error, res));
+
+    user.schedule.push(req.body);
+
+    return await user
+      .save()
+      .then((updated) => {
+        return res.json(updated.schedule);
       })
-      .catch((error) => res.status(500).send(error));
+      .catch((error) => errorHandler(error, res));
   },
 
-  async update(req, res) {},
+  async update(req, res) {
+    const { id } = req.auth;
+    const { event } = req.params;
+    if (!id) sendDataError('Id do usuário', res);
+    if (!event) sendDataError('Evento', res);
 
-  async delete(req, res) {},
+    const user = await User.findById(id)
+      .select('schedule')
+      .catch((error) => errorHandler(error, res));
+
+    const indexUpdate = user.schedule.findIndex(
+      (eventSchedule) => eventSchedule._id == event
+    );
+
+    if (indexUpdate <= -1) return sendDataError('Evento', res);
+    const newEvent = Object.assign(user.schedule[indexUpdate], req.body);
+    user.schedule[indexUpdate] = newEvent;
+
+    return await user
+      .save()
+      .then((updated) => {
+        return res.json(updated.schedule);
+      })
+      .catch((error) => errorHandler(error, res));
+  },
+
+  async delete(req, res) {
+    const { id } = req.auth;
+    const { event } = req.params;
+    if (!id) sendDataError('Id do usuário', res);
+
+    const user = await User.findById(id)
+      .select('schedule')
+      .catch((error) => errorHandler(error, res));
+
+    const indexDelete = user.schedule.findIndex(
+      (eventSchedule) => eventSchedule._id == event
+    );
+
+    if (indexDelete <= -1) return sendDataError('Evento', res);
+    user.schedule.splice(indexDelete, 1);
+
+    return await user
+      .save()
+      .then((updated) => {
+        return res.json(updated.schedule);
+      })
+      .catch((error) => errorHandler(error, res));
+  },
 };

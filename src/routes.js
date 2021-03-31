@@ -4,6 +4,7 @@ const routes = express.Router();
 
 const UserController = require('./controllers/UserController');
 const ScheduleController = require('./controllers/ScheduleController');
+const Auth = require('./setup/auth');
 
 const adminVerify = (req, res, next) => {
   if (
@@ -23,14 +24,15 @@ routes.get('/users/:id', UserController.show);
 routes.post('/users', adminVerify, UserController.create);
 routes.put('/users/:id', adminVerify, UserController.update);
 routes.post('/users/:id/horarios', UserController.addSpecialOpening);
+routes.post('/users/:id/services', UserController.addService);
 
-routes.get('/login', UserController.login);
+routes.get('/login', Auth.login);
 
-// routes.get('/events', ScheduleController.list);
-// routes.get('/events/:id', ScheduleController.show);
-// routes.post('/events', ScheduleController.create);
-// routes.put('/events', ScheduleController.update);
-// routes.delete('/events', ScheduleController.delete);
+routes.get('/events', ScheduleController.list);
+routes.get('/events/:event', ScheduleController.show);
+routes.post('/events', ScheduleController.create);
+routes.put('/events/:event', ScheduleController.update);
+routes.delete('/events/:event', ScheduleController.delete);
 
 routes.use('*', (req, res) =>
   res.status(404).json({ message: 'Rota não encontrada!' })
