@@ -3,11 +3,10 @@ const User = mongoose.model('User');
 
 module.exports = {
   async authMiddleware(req, res, next) {
-    const { username, password, id } = req.headers;
+    const { username, password } = req.headers;
     return await User.findOne({
       username,
       password,
-      _id: id,
     })
       .then((authorized) => {
         if (authorized) {
@@ -20,7 +19,7 @@ module.exports = {
           return res.status(403).end('NAO AUTENTICADO!');
         }
       })
-      .catch((error) => res.status(500).end(error));
+      .catch((error) => res.status(500).send(error));
   },
 
   async login(req, res) {

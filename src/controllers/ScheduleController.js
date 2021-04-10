@@ -1,12 +1,9 @@
 const mongoose = require('mongoose');
+const checkBlocking = require('../webhooks/checkBlocking');
+
 const User = mongoose.model('User');
 
 const errorHandler = require('../functions/errorHandler');
-const validateFields = async (...fields) => {
-  if (!fields) {
-    return new error('ei, um campo está inválido!');
-  }
-};
 
 const sendDataError = (data, res) => {
   return res.status(400).send(`${data} não encontrado!`);
@@ -46,46 +43,92 @@ module.exports = {
 
   async create(req, res) {
     const { id } = req.auth;
+    const { eventhours, service } = req.body;
     if (!id) sendDataError('Id do usuário', res);
 
-    const user = await User.findById(id)
-      .select('schedule')
-      .catch((error) => errorHandler(error, res));
+    const user = await User.findById(id).catch((error) =>
+      errorHandler(error, res)
+    );
 
-    user.schedule.push(req.body);
-
-    return await user
-      .save()
-      .then((updated) => {
-        return res.json(updated.schedule);
+    return await checkBlocking
+      .checkAndSendResponse(
+        eventhours,
+        service,
+        user.services,
+        user.specialOpening,
+        user.opening,
+        user.closing,
+        user.schedule
+      )
+      .then((formattedHours) => {
+        if (formattedHours) {
+          var idEvent = req.body.eventhours.concat(
+            ' ',
+            String(req.professional).toLowerCase()
+          );
+          const newEvent = {
+            clientName: req.body.clientName,
+            service: req.body.service,
+            professional: req.body.professional,
+            from: formattedHours[0],
+            to: formattedHours[1],
+          };
+          user.schedule.push(newEvent);
+          //
+          user
+            .save()
+            .then((updated) => {
+              const indexEvent = user.schedule.findIndex(
+                (eventSchedule) => eventSchedule._id == idEvent
+              );
+              return res.status(201).json(updated.schedule[indexEvent]);
+            })
+            .catch((error) => errorHandler(error, res));
+        }
       })
-      .catch((error) => errorHandler(error, res));
+      .catch(error, errorHandler(error));
   },
 
   async update(req, res) {
     const { id } = req.auth;
     const { event } = req.params;
+    const { eventhours, service } = req.body;
     if (!id) sendDataError('Id do usuário', res);
     if (!event) sendDataError('Evento', res);
 
-    const user = await User.findById(id)
-      .select('schedule')
-      .catch((error) => errorHandler(error, res));
-
-    const indexUpdate = user.schedule.findIndex(
-      (eventSchedule) => eventSchedule._id == event
+    const user = await User.findById(id).catch((error) =>
+      errorHandler(error, res)
     );
 
-    if (indexUpdate <= -1) return sendDataError('Evento', res);
-    const newEvent = Object.assign(user.schedule[indexUpdate], req.body);
-    user.schedule[indexUpdate] = newEvent;
+    return await checkBlocking
+      .checkAndSendResponse(
+        eventhours,
+        service,
+        user.services,
+        user.specialOpening,
+        user.opening,
+        user.closing,
+        user.schedule
+      )
+      .then((response) => {
+        if (response == 'ok') {
+          const indexUpdate = user.schedule.findIndex(
+            (eventSchedule) => eventSchedule._id == event
+          );
 
-    return await user
-      .save()
-      .then((updated) => {
-        return res.json(updated.schedule);
+          if (indexUpdate <= -1) return sendDataError('Evento', res);
+          const newEvent = Object.assign(user.schedule[indexUpdate], req.body);
+          user.schedule[indexUpdate] = newEvent;
+          //
+          user
+            .save()
+            .then((updated) => {
+              return res.json(updated.schedule[indexUpdate]);
+            })
+            .catch((error) => errorHandler(error, res));
+        }
       })
-      .catch((error) => errorHandler(error, res));
+      .catch(error, errorHandler(error));
   },
 
   async delete(req, res) {

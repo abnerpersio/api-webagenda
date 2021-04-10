@@ -1,29 +1,115 @@
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
+const moment = require('moment-timezone');
 
-const HorarioSchema = new mongoose.Schema(
+require('moment/locale/pt-br');
+moment.tz.setDefault('America/Sao_Paulo');
+
+const HourOpeningSchema = new mongoose.Schema(
   {
-    from: { type: String, required: true },
-    to: { type: String, required: true },
+    working: { type: Boolean, default: true },
+    from: {
+      type: String,
+      required: [true, 'por favor adicione um horário valido'],
+    },
+    to: {
+      type: String,
+      required: [true, 'por favor adicione um horário valido'],
+    },
+  },
+  { _id: false }
+);
+
+const HourEventSchema = new mongoose.Schema(
+  {
+    from: {
+      type: String,
+      required: [true, 'por favor adicione um horário valido'],
+    },
+    to: {
+      type: String,
+      required: [true, 'por favor adicione um horário valido'],
+    },
   },
   { _id: false }
 );
 
 const EventSchema = new mongoose.Schema({
-  clientName: { type: String, required: true },
-  service: { type: String, required: true },
-  professional: { type: String, required: true },
-  horario: HorarioSchema,
+  _id: {
+    type: String,
+    default: mongoose.Types.ObjectId(),
+  },
+  clientName: {
+    type: String,
+    required: [true, 'ei! faltou o nome do cliente'],
+  },
+  service: { type: String, required: [true, 'ei! faltou o serviço'] },
+  professional: {
+    type: String,
+    required: [true, 'ei! faltou um nome de profissional'],
+  },
+  from: {
+    type: String,
+    required: [true, 'por favor adicione um horário valido'],
+  },
+  to: {
+    type: String,
+    required: [true, 'por favor adicione um horário valido'],
+  },
+  exclusionDate: {
+    type: String,
+    default: moment().add(90, 'days').format('DD-MM-YYYY'),
+  },
+});
+
+EventSchema.post('validate', function (doc) {
+  if (
+    !moment(doc.exclusionDate, 'DD-MM-YYYY').isSame(
+      moment(doc.from, 'DD-MM-YYYY HH:mm').add(60, 'days'),
+      'day'
+    )
+  ) {
+    doc.exclusionDate = moment(doc.from, 'DD-MM-YYYY HH:mm')
+      .add(60, 'days')
+      .format('DD-MM-YYYY');
+  }
+
+  if (String(doc._id).length == 24) {
+    let newId = moment(doc.from, 'DD-MM-YYYY HH:mm').format('DD-MM-YYYY HH:mm');
+    doc._id = newId.concat(' ', String(doc.professional).toLowerCase());
+  }
 });
 
 const OpeningSchema = new mongoose.Schema(
   {
-    monday: HorarioSchema,
-    tuesday: HorarioSchema,
-    wednesday: HorarioSchema,
-    thursday: HorarioSchema,
-    saturday: HorarioSchema,
-    sunday: HorarioSchema,
+    seg: {
+      type: HourOpeningSchema,
+      required: [true, 'preencha o campo segunda'],
+    },
+    ter: {
+      type: HourOpeningSchema,
+      required: [true, 'preencha o campo terça'],
+    },
+    qua: {
+      type: HourOpeningSchema,
+      required: [true, 'preencha o campo quarta'],
+    },
+    qui: {
+      type: HourOpeningSchema,
+      required: [true, 'preencha o campo quinta'],
+    },
+    sex: {
+      type: HourOpeningSchema,
+      required: [true, 'preencha o campo sexta'],
+    },
+    sáb: {
+      type: HourOpeningSchema,
+      required: [true, 'preencha o campo sabado'],
+    },
+    dom: {
+      type: HourOpeningSchema,
+      required: [true, 'preencha o campo domingo'],
+    },
   },
   { _id: false }
 );
@@ -44,6 +130,7 @@ const UserSchema = new mongoose.Schema(
     },
     username: {
       type: String,
+      lowercase: true,
       unique: true,
       required: [true, 'digite um nome de usuário!'],
     },
@@ -52,11 +139,13 @@ const UserSchema = new mongoose.Schema(
       min: 6,
       required: [true, 'digite uma senha!'],
     },
-    professionals: Array,
+    professional: String,
     services: [ServiceSchema],
     opening: OpeningSchema,
-    specialOpening: [HorarioSchema],
+    closing: OpeningSchema,
+    specialOpening: [HourEventSchema],
     schedule: [EventSchema],
+    groupId: String,
     isAdmin: { type: Boolean, default: false, select: false },
   },
   {
