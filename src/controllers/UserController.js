@@ -10,8 +10,10 @@ const validateFields = async (...fields) => {
 
 module.exports = {
   async show(req, res) {
+    const prop = req.query.prop;
+
     return await User.findById(req.params.id)
-      .then((user) => res.json(user))
+      .then((user) => res.json(user?.[prop] ? user?.[prop] : user))
       .catch((error) => errorHandler(error, res));
   },
 
@@ -22,8 +24,19 @@ module.exports = {
   },
 
   async update(req, res) {
-    return await User.findByIdAndUpdate(req.params.id, req.body, { new: true })
-      .then((user) => res.json(user))
+    return await User.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    })
+      .then((user) => {
+        const {
+          specialOpening,
+          schedule,
+          services,
+          ...userUpdated
+        } = user.toObject();
+        res.json(userUpdated);
+      })
       .catch((error) => errorHandler(error, res));
   },
 
@@ -34,6 +47,19 @@ module.exports = {
   },
 
   async addSpecialOpening(req, res) {
+    const { id } = req.params;
+    const user = await User.findById(id).select('specialOpening');
+    user.specialOpening.push(req.body);
+
+    return await user
+      .save()
+      .then((updated) => {
+        return res.json(updated.specialOpening);
+      })
+      .catch((error) => errorHandler(error, res));
+  },
+
+  async addSpecialClose(req, res) {
     const { id } = req.params;
     const user = await User.findById(id).select('specialOpening');
     user.specialOpening.push(req.body);
