@@ -145,7 +145,7 @@ const UserSchema = new mongoose.Schema(
     closing: OpeningSchema,
     specialOpening: [HourEventSchema],
     schedule: [EventSchema],
-    groupId: String,
+    groupName: String,
     isAdmin: { type: Boolean, default: false, select: false },
   },
   {
