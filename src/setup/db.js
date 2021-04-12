@@ -14,4 +14,6 @@ mongoose.connect(uri, {
 });
 
 require('../models/user');
+require('../models/group');
 const User = mongoose.model('User');
+const Group = mongoose.model('Group');

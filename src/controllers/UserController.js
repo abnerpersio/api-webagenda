@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const User = mongoose.model('User');
+const Group = mongoose.model('Group');
 
 const errorHandler = require('../functions/errorHandler');
 const validateFields = async (...fields) => {
@@ -81,6 +82,25 @@ module.exports = {
       .save()
       .then((updated) => {
         return res.json(updated.services);
+      })
+      .catch((error) => errorHandler(error, res));
+  },
+
+  async newGroup(req, res) {
+    await Group.create(req.body)
+      .then((group) => {
+        res.json(group);
+      })
+      .catch((error) => errorHandler(error, res));
+  },
+
+  async updateGroup(req, res) {
+    const { groupId } = req.params;
+    if (!groupId) return res.status(400).status('digite um id do grupo');
+
+    await Group.findByIdAndUpdate(groupId, req.body, { new: true })
+      .then((updated) => {
+        res.json(updated);
       })
       .catch((error) => errorHandler(error, res));
   },
