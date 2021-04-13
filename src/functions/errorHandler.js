@@ -8,8 +8,8 @@ module.exports = {
       });
     } else {
       return callback
-        .status(500)
-        .json({ message: 'ocorreu um erro inesperado', error: error });
+        ?.status(500)
+        ?.json({ message: 'ocorreu um erro inesperado', error: error });
     }
   },
 
