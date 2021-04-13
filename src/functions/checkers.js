@@ -155,13 +155,6 @@ module.exports = {
     schedule = required('agenda'),
     cb
   ) {
-    console.log('horas', hoursEvent);
-    console.log('special opening', specialOpening);
-    console.log('abertura', openingTime);
-    console.log('working', workingInfo);
-    console.log('fechado', closedTime);
-    console.log('agenda', schedule);
-
     function checkFalse(input) {
       if (input.length > 0) return input.some(checkFalse);
       return input == false;
