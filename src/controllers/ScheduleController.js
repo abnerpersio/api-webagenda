@@ -28,7 +28,7 @@ module.exports = {
         );
         return res.json(user.schedule[indexShow]);
       })
-      .catch((error) => errorHandler(error, res));
+      .catch((error) => errorHandler.reqErrors(error, res));
   },
 
   async list(req, res) {
@@ -38,20 +38,21 @@ module.exports = {
     return await User.findById(id)
       .select('schedule')
       .then((user) => res.json(user?.schedule))
-      .catch((error) => errorHandler(error, res));
+      .catch((error) => errorHandler.reqErrors(error, res));
   },
 
   async create(req, res) {
     const { id } = req.auth;
-    const { eventhours, service } = req.body;
+    const { eventhours, service, eventdate } = req.body;
     if (!id) sendDataError('Id do usuário', res);
 
     const user = await User.findById(id).catch((error) =>
-      errorHandler(error, res)
+      errorHandler.reqErrors(error, res)
     );
 
     return await checkBlocking
       .checkAndSendResponse(
+        eventdate,
         eventhours,
         service,
         user.services,
@@ -61,6 +62,7 @@ module.exports = {
         user.schedule
       )
       .then((formattedHours) => {
+        console.log('responta antes de criar', formattedHours);
         if (formattedHours) {
           var idEvent = req.body.eventhours.concat(
             ' ',
@@ -83,10 +85,10 @@ module.exports = {
               );
               return res.status(201).json(updated.schedule[indexEvent]);
             })
-            .catch((error) => errorHandler(error, res));
+            .catch((error) => errorHandler.reqErrors(error, res));
         }
       })
-      .catch(error, errorHandler(error));
+      .catch((error) => errorHandler.reqErrors(error, res));
   },
 
   async update(req, res) {
@@ -97,11 +99,12 @@ module.exports = {
     if (!event) sendDataError('Evento', res);
 
     const user = await User.findById(id).catch((error) =>
-      errorHandler(error, res)
+      errorHandler.reqErrors(error, res)
     );
 
     return await checkBlocking
       .checkAndSendResponse(
+        eventdate,
         eventhours,
         service,
         user.services,
@@ -111,7 +114,8 @@ module.exports = {
         user.schedule
       )
       .then((response) => {
-        if (response == 'ok') {
+        console.log('resposta final', response);
+        if (response) {
           const indexUpdate = user.schedule.findIndex(
             (eventSchedule) => eventSchedule._id == event
           );
@@ -125,10 +129,10 @@ module.exports = {
             .then((updated) => {
               return res.json(updated.schedule[indexUpdate]);
             })
-            .catch((error) => errorHandler(error, res));
+            .catch((error) => errorHandler.reqErrors(error, res));
         }
       })
-      .catch(error, errorHandler(error));
+      .catch((error) => errorHandler.reqErrors(error, res));
   },
 
   async delete(req, res) {
@@ -138,7 +142,7 @@ module.exports = {
 
     const user = await User.findById(id)
       .select('schedule')
-      .catch((error) => errorHandler(error, res));
+      .catch((error) => errorHandler.reqErrors(error, res));
 
     const indexDelete = user.schedule.findIndex(
       (eventSchedule) => eventSchedule._id == event
@@ -152,6 +156,6 @@ module.exports = {
       .then((updated) => {
         return res.json(updated.schedule);
       })
-      .catch((error) => errorHandler(error, res));
+      .catch((error) => errorHandler.reqErrors(error, res));
   },
 };

@@ -1,7 +1,10 @@
 const checkers = require('../functions/checkers');
+const errorHandler = require('../functions/errorHandler');
+const { format } = require('../functions/formatter');
 
 module.exports = {
   checkAndSendResponse(
+    eventDate,
     eventHours,
     serviceOption,
     services,
@@ -10,33 +13,38 @@ module.exports = {
     closingInfo,
     schedule
   ) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       const indexService = services.findIndex(
         (eventSchedule) => eventSchedule.serviceName == serviceOption
       );
       const serviceDuration = services[indexService].serviceTime;
       //
+      const formattedDate = format(eventDate);
+      const fullDate = formattedDate?.split(' ')[0]?.concat(' ', eventHours);
       const endEventHours = checkers.addTheServiceTime(
-        eventHours,
+        fullDate,
         serviceDuration
       );
 
-      const eventFormattedHours = [eventHours, endEventHours];
+      const eventFormattedHours = [fullDate, endEventHours];
+      console.log('formatado ', eventFormattedHours);
 
-      return checkers.formatAndCheckHours(
-        eventFormattedHours,
-        specialOpeningTime,
-        openingInfo,
-        closingInfo,
-        schedule,
-        (status, response) => {
-          if (status == 500) reject(new Error(`erro ao marcar, ${response}`));
-          else if (status == 200) resolve(eventFormattedHours);
-          // if (status == 500) cb.status(500).send(`erro ao marcar, ${response}`);
-          // else if (status == 200)
-          // cb.status(201).send('evento marcado com sucesso!');
+      try {
+        const result = await checkers.formatAndCheckHours(
+          eventFormattedHours,
+          specialOpeningTime,
+          openingInfo,
+          closingInfo,
+          schedule
+        );
+        if (result.status == 500) {
+          reject(`erro ao marcar, ${result.response}`);
+        } else if (result.status == 200) {
+          resolve(eventFormattedHours);
         }
-      );
+      } catch (error) {
+        return reject(`erro ao marcar ${error}`);
+      }
     });
   },
 };
