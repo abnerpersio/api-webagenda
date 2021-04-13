@@ -64,9 +64,9 @@ module.exports = {
       .then((formattedHours) => {
         console.log('responta antes de criar', formattedHours);
         if (formattedHours) {
-          var idEvent = req.body.eventhours.concat(
+          var idEvent = formattedHours[0].concat(
             ' ',
-            String(req.professional).toLowerCase()
+            String(req.body.professional).toLowerCase()
           );
           const newEvent = {
             clientName: req.body.clientName,

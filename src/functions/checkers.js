@@ -25,10 +25,28 @@ module.exports = {
       return moment(hour, fullDateFormatPattern).isBetween(
         moment(comparingHours[0], fullDateFormatPattern),
         moment(comparingHours[1], fullDateFormatPattern),
-        'minute',
-        '[]'
+        'minute'
+        // '[]'
       );
     });
+  },
+
+  checkBeetweenAndSame(comparingHours, hoursEvent) {
+    const result = [];
+    hoursEvent.map((hour, index) => {
+      var firstItem = moment(hour, fullDateFormatPattern).isBetween(
+        moment(comparingHours[0], fullDateFormatPattern),
+        moment(comparingHours[1], fullDateFormatPattern),
+        'minute'
+      );
+      //
+      var secondItem = moment(hoursEvent[index], fullDateFormatPattern).isSame(
+        moment(comparingHours[index], fullDateFormatPattern)
+      );
+      //
+      return result.push(firstItem) && result.push(secondItem);
+    });
+    return result;
   },
 
   checkBeetweenNoCoutingBorders(comparingHours, hoursEvent) {
@@ -134,7 +152,7 @@ module.exports = {
   checkClosedInHours(closedTime, hoursEvent) {
     return new Promise((resolve, reject) => {
       if (!closedTime || !hoursEvent) reject('Parametros faltando!');
-      resolve(this.checkBeetween(closedTime, hoursEvent));
+      resolve(this.checkBeetweenAndSame(closedTime, hoursEvent));
     });
   },
 
@@ -142,7 +160,9 @@ module.exports = {
   checkEventBlocking(schedule, hoursEvent) {
     return new Promise((resolve, reject) => {
       if (!schedule || !hoursEvent) reject('Parametros faltando!');
-      resolve(schedule.map((event) => this.checkBeetween(event, hoursEvent)));
+      resolve(
+        schedule.map((event) => this.checkBeetweenAndSame(event, hoursEvent))
+      );
     });
   },
 
@@ -152,8 +172,7 @@ module.exports = {
     openingTime = required('horario abertura'),
     workingInfo = required('informações de trabalho'),
     closedTime = required('horario fechamento'),
-    schedule = required('agenda'),
-    cb
+    schedule = required('agenda')
   ) {
     function checkFalse(input) {
       if (input.length > 0) return input.some(checkFalse);
@@ -349,7 +368,7 @@ module.exports = {
       if (schedule?.length > 0) {
         schedule?.map((event, indexSchedule) => {
           freeTimes.map((freeTime, indexFreeTimes) => {
-            var checkBlocking = this.checkBeetweenNoCoutingBorders(freeTime, [
+            var checkBlocking = this.checkBeetween(freeTime, [
               event[0],
               event[1],
             ]);
@@ -369,10 +388,7 @@ module.exports = {
       //
       if (closingTime?.length > 0) {
         freeTimes.map((freeTime, indexFreeTimes) => {
-          var checkBlocking = this.checkBeetweenNoCoutingBorders(
-            freeTime,
-            closingTime
-          );
+          var checkBlocking = this.checkBeetween(freeTime, closingTime);
           if (checkBlocking.some(checkTrue)) {
             var arrayOrdered = orderArrayAndGetNew([
               freeTime[0],
