@@ -43,7 +43,11 @@ const EventSchema = new mongoose.Schema({
     type: String,
     required: [true, 'ei! faltou o nome do cliente'],
   },
-  service: { type: String, required: [true, 'ei! faltou o serviço'] },
+  service: {
+    type: String,
+    lowercase: true,
+    required: [true, 'ei! faltou o serviço'],
+  },
   professional: {
     type: String,
     required: [true, 'ei! faltou um nome de profissional'],
@@ -116,7 +120,7 @@ const OpeningSchema = new mongoose.Schema(
 
 const ServiceSchema = new mongoose.Schema(
   {
-    serviceName: { type: String, required: true },
+    serviceName: { type: String, lowercase: true, required: true },
     serviceTime: { type: String, required: true },
   },
   { _id: false }

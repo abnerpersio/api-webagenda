@@ -1,6 +1,5 @@
 const moment = require('moment-timezone');
 const errorHandler = require('./errorHandler');
-const formatter = require('./formatter');
 
 require('moment/locale/pt-br');
 moment.tz.setDefault('America/Sao_Paulo');
@@ -26,9 +25,18 @@ module.exports = {
       return moment(hour, fullDateFormatPattern).isBetween(
         moment(comparingHours[0], fullDateFormatPattern),
         moment(comparingHours[1], fullDateFormatPattern),
+        'minute',
+        '[]'
+      );
+    });
+  },
+
+  checkBeetweenNoCoutingBorders(comparingHours, hoursEvent) {
+    return hoursEvent.map((hour) => {
+      return moment(hour, fullDateFormatPattern).isBetween(
+        moment(comparingHours[0], fullDateFormatPattern),
+        moment(comparingHours[1], fullDateFormatPattern),
         'minute'
-        // temporary change
-        // '[]'
       );
     });
   },
@@ -107,8 +115,7 @@ module.exports = {
   // 1.
   checkSpecialWorking(specialOpening, hoursEvent) {
     return new Promise((resolve, reject) => {
-      if (!specialOpening || !hoursEvent)
-        reject(new Error('Parametros faltando!'));
+      if (!specialOpening || !hoursEvent) reject('Parametros faltando!');
       resolve(
         specialOpening.map((time) => this.checkBeetween(time, hoursEvent))
       );
@@ -118,8 +125,7 @@ module.exports = {
   // 2.
   checkWorkingInHours(hoursWorking, hoursEvent) {
     return new Promise((resolve, reject) => {
-      if (!hoursWorking || !hoursEvent)
-        reject(new Error('Parametros faltando!'));
+      if (!hoursWorking || !hoursEvent) reject('Parametros faltando!');
       resolve(this.checkBeetween(hoursWorking, hoursEvent));
     });
   },
@@ -127,7 +133,7 @@ module.exports = {
   // 3.
   checkClosedInHours(closedTime, hoursEvent) {
     return new Promise((resolve, reject) => {
-      if (!closedTime || !hoursEvent) reject(new Error('Parametros faltando!'));
+      if (!closedTime || !hoursEvent) reject('Parametros faltando!');
       resolve(this.checkBeetween(closedTime, hoursEvent));
     });
   },
@@ -135,7 +141,7 @@ module.exports = {
   // 4.
   checkEventBlocking(schedule, hoursEvent) {
     return new Promise((resolve, reject) => {
-      if (!schedule || !hoursEvent) reject(new Error('Parametros faltando!'));
+      if (!schedule || !hoursEvent) reject('Parametros faltando!');
       resolve(schedule.map((event) => this.checkBeetween(event, hoursEvent)));
     });
   },
@@ -149,6 +155,13 @@ module.exports = {
     schedule = required('agenda'),
     cb
   ) {
+    console.log('horas', hoursEvent);
+    console.log('special opening', specialOpening);
+    console.log('abertura', openingTime);
+    console.log('working', workingInfo);
+    console.log('fechado', closedTime);
+    console.log('agenda', schedule);
+
     function checkFalse(input) {
       if (input.length > 0) return input.some(checkFalse);
       return input == false;
@@ -160,7 +173,7 @@ module.exports = {
     }
 
     function getSomeInArray(arr, cb) {
-      arr.map((item) => item.every(cb)).some(cb);
+      return arr.map((item) => item.some(cb)).some(cb);
     }
 
     return this.checkSpecialWorking(specialOpening, hoursEvent)
@@ -171,17 +184,21 @@ module.exports = {
             .then((result) => {
               var checkingArr = getSomeInArray(result, checkTrue);
               if (checkingArr) {
-                return cb(500, 'evento bloqueando');
+                return { status: 500, response: 'evento bloqueando' };
+              } else {
+                return { status: 200 };
               }
-              return cb(200);
             })
-            .catch((err) => console.error(err));
+            .catch((error) => ({ status: 500, response: error }));
         }
+        //
         const dayEvent = moment(hoursEvent, fullDateFormatPattern).format(
           dayFormatPattern
         );
-        if (!workingInfo[dayEvent]['working'])
-          return cb(500, 'não trabalha no dia');
+        if (!workingInfo[dayEvent]['working']) {
+          return { status: 500, response: 'não trabalha no dia' };
+        }
+        //
         return this.checkWorkingInHours(openingTime, hoursEvent)
           .then((result) => {
             var checkingArr = result.every(checkTrue);
@@ -194,21 +211,24 @@ module.exports = {
                       .then((result) => {
                         var checkingArr = getSomeInArray(result, checkTrue);
                         if (checkingArr) {
-                          return cb(500, 'evento bloqueando');
+                          return { status: 500, response: 'evento bloqueando' };
+                        } else {
+                          return { status: 200 };
                         }
-                        return cb(200);
                       })
-                      .catch((err) => console.error(err));
+                      .catch((error) => ({ status: 500, response: error }));
+                  } else {
+                    return { status: 500, response: 'fechado nesse horário' };
                   }
-                  return cb(500, 'fechado nesse horário');
                 })
-                .catch((err) => console.error(err));
+                .catch((error) => ({ status: 500, response: error }));
+            } else {
+              return { status: 500, response: 'fechados no horario' };
             }
-            return cb(500, 'fechados no horario');
           })
-          .catch((err) => console.error(err));
+          .catch((error) => ({ status: 500, response: error }));
       })
-      .catch((err) => console.error(err));
+      .catch((error) => ({ status: 500, response: error }));
   },
 
   returnFreeTimes(
@@ -218,66 +238,73 @@ module.exports = {
     specialOpening,
     opening,
     closing,
-    schedule,
-    cb
+    schedule
   ) {
-    const {
-      hoursEvent,
-      specialOpeningArray,
-      openTime,
-      workingInfo,
-      closedTime,
-      scheduleArray,
-    } = this.formatHours(eventDate, specialOpening, opening, closing, schedule);
-    //
-    const indexService = services.findIndex(
-      (eventSchedule) => eventSchedule.serviceName == serviceOption
-    );
-    const serviceDuration = services[indexService].serviceTime;
-    //
-    return this.calculateFreeTimes(
-      specialOpeningArray,
-      openTime,
-      scheduleArray,
-      closedTime
-    )
-      .then((freeTimes) => {
-        var freeUniqueHours = [];
-        freeTimes.map((freeTime) => {
-          if (
-            moment(freeTime[0], fullDateFormatPattern).diff(
-              moment(),
-              'minutes'
-            ) < 0
-          )
-            return false;
-          var durationInterval = moment(
-            freeTime[1],
-            fullDateFormatPattern
-          ).diff(moment(freeTime[0], fullDateFormatPattern), 'minute');
-          //
-          if (durationInterval > serviceDuration) {
-            var multiple = ~~(durationInterval / serviceDuration);
-            for (let i = 0; i < multiple; i++)
-              freeUniqueHours.push(
-                moment(freeTime[0], fullDateFormatPattern)
-                  .add(i * serviceDuration, 'minutes')
-                  .format(fullDateFormatPattern)
-              );
-          }
-        });
-        // ordering array for better view
-        freeUniqueHours.sort((a, b) => {
-          if (a.split(' ')[1].split(':')[0] > b.split(' ')[1].split(':')[0])
-            return 1;
-          if (a.split(' ')[1].split(':')[0] < b.split(' ')[1].split(':')[0])
-            return -1;
-          return 0;
-        });
+    return new Promise((resolve, reject) => {
+      const {
+        hoursEvent,
+        specialOpeningArray,
+        openTime,
+        workingInfo,
+        closedTime,
+        scheduleArray,
+      } = this.formatHours(
+        eventDate,
+        specialOpening,
+        opening,
+        closing,
+        schedule
+      );
+      //
+      const indexService = services.findIndex(
+        (eventSchedule) => eventSchedule.serviceName == serviceOption
+      );
+      const serviceDuration = services[indexService].serviceTime;
+      //
+      return this.calculateFreeTimes(
+        specialOpeningArray,
+        openTime,
+        scheduleArray,
+        closedTime
+      )
+        .then((freeTimes) => {
+          var freeUniqueHours = [];
+          freeTimes.map((freeTime) => {
+            if (
+              moment(freeTime[0], fullDateFormatPattern).diff(
+                moment(),
+                'minutes'
+              ) < 0
+            )
+              return false;
+            var durationInterval = moment(
+              freeTime[1],
+              fullDateFormatPattern
+            ).diff(moment(freeTime[0], fullDateFormatPattern), 'minute');
+            //
+            if (durationInterval > serviceDuration) {
+              var multiple = ~~(durationInterval / serviceDuration);
+              for (let i = 0; i < multiple; i++)
+                freeUniqueHours.push(
+                  moment(freeTime[0], fullDateFormatPattern)
+                    .add(i * serviceDuration, 'minutes')
+                    .format(fullDateFormatPattern)
+                );
+            }
+          });
+          // ordering array for better view
+          freeUniqueHours.sort((a, b) => {
+            if (a.split(' ')[1].split(':')[0] > b.split(' ')[1].split(':')[0])
+              return 1;
+            if (a.split(' ')[1].split(':')[0] < b.split(' ')[1].split(':')[0])
+              return -1;
+            return 0;
+          });
 
-        return freeUniqueHours;
-      })
-      .catch((error) => console.error(error));
+          resolve(freeUniqueHours);
+        })
+        .catch((error) => reject(error));
+    });
   },
 
   calculateFreeTimes(
@@ -329,7 +356,7 @@ module.exports = {
       if (schedule?.length > 0) {
         schedule?.map((event, indexSchedule) => {
           freeTimes.map((freeTime, indexFreeTimes) => {
-            var checkBlocking = this.checkBeetween(freeTime, [
+            var checkBlocking = this.checkBeetweenNoCoutingBorders(freeTime, [
               event[0],
               event[1],
             ]);
@@ -349,7 +376,10 @@ module.exports = {
       //
       if (closingTime?.length > 0) {
         freeTimes.map((freeTime, indexFreeTimes) => {
-          var checkBlocking = this.checkBeetween(freeTime, closingTime);
+          var checkBlocking = this.checkBeetweenNoCoutingBorders(
+            freeTime,
+            closingTime
+          );
           if (checkBlocking.some(checkTrue)) {
             var arrayOrdered = orderArrayAndGetNew([
               freeTime[0],
@@ -377,34 +407,35 @@ module.exports = {
     specialOpeningTime,
     openingInfo,
     closingInfo,
-    schedule,
-    cb
+    schedule
   ) {
-    //
-    const {
-      hoursEvent,
-      specialOpeningArray,
-      openTime,
-      workingInfo,
-      closedTime,
-      scheduleArray,
-    } = this.formatHours(
-      eventFormattedHours,
-      specialOpeningTime,
-      openingInfo,
-      closingInfo,
-      schedule
-    );
-
-    return this.checkHours(
-      hoursEvent,
-      specialOpeningArray,
-      openTime,
-      workingInfo,
-      closedTime,
-      scheduleArray,
-      cb
-    );
+    return new Promise((resolve, reject) => {
+      const {
+        hoursEvent,
+        specialOpeningArray,
+        openTime,
+        workingInfo,
+        closedTime,
+        scheduleArray,
+      } = this.formatHours(
+        eventFormattedHours,
+        specialOpeningTime,
+        openingInfo,
+        closingInfo,
+        schedule
+      );
+      //
+      resolve(
+        this.checkHours(
+          hoursEvent,
+          specialOpeningArray,
+          openTime,
+          workingInfo,
+          closedTime,
+          scheduleArray
+        )
+      );
+    });
   },
 };
 // used for checking free times and check event blocking before updating or saving

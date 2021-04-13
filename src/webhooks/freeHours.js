@@ -1,7 +1,7 @@
 const checkers = require('../functions/checkers');
 const mongoose = require('mongoose');
 const errorHandler = require('../functions/errorHandler');
-const formatterData = require('../functions/formatter');
+const { format } = require('../functions/formatter');
 
 const User = mongoose.model('User');
 
@@ -19,8 +19,7 @@ module.exports = {
       .then((user) => {
         //
         if (!user) sendDataError('Informações', res);
-        const formattedEventDate = formatterData.format(eventdate);
-        console.log('formatado: ', formattedEventDate);
+        const formattedEventDate = format(eventdate);
         //
         const { services, specialOpening, opening, closing, schedule } = user;
         return checkers
@@ -46,14 +45,14 @@ module.exports = {
                 text: hour.split(' ')[1],
                 order: index + 1,
                 type: 'text/plain',
-                value: hour,
+                value: hour.split(' ')[1],
               });
             });
             return res.json(blipContent);
           })
-          .catch((err) => console.error(err));
+          .catch((error) => errorHandler.reqErrors(error, res));
       })
-      .catch((error) => errorHandler(error, res));
+      .catch((error) => errorHandler.reqErrors(error, res));
   },
 };
 // used in routes, to get the free times based on a day
