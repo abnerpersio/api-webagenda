@@ -20,17 +20,12 @@ module.exports = {
     return User.findOne({
       $and: [{ _id: id }, { 'schedule._id': event }],
     })
-      .select('schedule notificationsToken')
+      .select('schedule')
       .then((user) => {
         if (!user) sendDataError('Evento', res);
 
         const indexShow = user.schedule.findIndex(
           (eventSchedule) => eventSchedule._id == event
-        );
-        notifier(
-          'Um cliente acaba de fazer um agendamento!',
-          'confira agora mesmo.',
-          user.notificationsToken
         );
         return res.json(user.schedule[indexShow]);
       })
@@ -88,6 +83,11 @@ module.exports = {
             .then((updated) => {
               const indexEvent = user.schedule.findIndex(
                 (eventSchedule) => eventSchedule._id == idEvent
+              );
+              notifier(
+                'Um cliente acaba de fazer um agendamento!',
+                'confira agora mesmo.',
+                user.notificationsToken
               );
               return res.status(201).json(updated.schedule[indexEvent]);
             })
