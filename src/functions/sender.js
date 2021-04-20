@@ -1,0 +1,29 @@
+require('dotenv').config();
+
+module.exports = {
+  async notifier(title, message, notificationToken) {
+    const bodyObj = {
+      notification: {
+        title: title,
+        body: message,
+        click_action: 'https://d3aqqqs7b090ob.cloudfront.net/',
+        icon: 'https://d3aqqqs7b090ob.cloudfront.net/logo192.png',
+      },
+      to: notificationToken,
+    };
+    return await fetch('https://fcm.googleapis.com/fcm/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: process.env.NOTIFICATIONS_TOKEN,
+      },
+      body: JSON.stringify(bodyObj),
+    })
+      .then((response) => {
+        return;
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  },
+};

@@ -4,6 +4,7 @@ const checkBlocking = require('../functions/checkBlocking');
 const User = mongoose.model('User');
 
 const errorHandler = require('../functions/errorHandler');
+const { notifier } = require('../functions/sender');
 
 const sendDataError = (data, res) => {
   return res.status(400).send(`${data} não encontrado!`);
@@ -19,12 +20,17 @@ module.exports = {
     return User.findOne({
       $and: [{ _id: id }, { 'schedule._id': event }],
     })
-      .select('schedule')
+      .select('schedule notificationsToken')
       .then((user) => {
         if (!user) sendDataError('Evento', res);
 
         const indexShow = user.schedule.findIndex(
           (eventSchedule) => eventSchedule._id == event
+        );
+        notifier(
+          'Um cliente acaba de fazer um agendamento!',
+          'confira agora mesmo.',
+          user.notificationsToken
         );
         return res.json(user.schedule[indexShow]);
       })
