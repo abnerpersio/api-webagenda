@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const checkBlocking = require('../webhooks/checkBlocking');
+const checkBlocking = require('../functions/checkBlocking');
 
 const User = mongoose.model('User');
 

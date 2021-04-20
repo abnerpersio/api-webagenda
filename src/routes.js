@@ -5,7 +5,7 @@ const routes = express.Router();
 const UserController = require('./controllers/UserController');
 const ScheduleController = require('./controllers/ScheduleController');
 const freeHoursHook = require('./webhooks/freeHours');
-const getChat = require('./webhooks/getChatId');
+// const getChat = require('./webhooks/getChatId');
 const Auth = require('./setup/auth');
 
 const adminVerify = (req, res, next) => {
@@ -43,7 +43,7 @@ routes.delete('/events/:event', ScheduleController.delete);
 
 routes.get('/webhooks/freehours', freeHoursHook.getFreeHours);
 
-// didn't work in frontend, later i will see and solve that.
+// didn't work in frontend w/ react, later i will see and solve that.
 // routes.get('/webhooks/chatkey', getChat.getId);
 
 routes.use('*', (req, res) =>

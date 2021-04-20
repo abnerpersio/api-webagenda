@@ -25,8 +25,8 @@ module.exports = {
       return moment(hour, fullDateFormatPattern).isBetween(
         moment(comparingHours[0], fullDateFormatPattern),
         moment(comparingHours[1], fullDateFormatPattern),
-        'minute'
-        // '[]'
+        'minute',
+        '[]'
       );
     });
   },
@@ -44,7 +44,7 @@ module.exports = {
         moment(comparingHours[index], fullDateFormatPattern)
       );
       //
-      return result.push(firstItem) && result.push(secondItem);
+      result.push(firstItem) && result.push(secondItem);
     });
     return result;
   },

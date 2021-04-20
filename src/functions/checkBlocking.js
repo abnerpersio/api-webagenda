@@ -1,6 +1,6 @@
-const checkers = require('../functions/checkers');
-const errorHandler = require('../functions/errorHandler');
-const { format } = require('../functions/formatter');
+const checkers = require('./checkers');
+const errorHandler = require('./errorHandler');
+const { format } = require('./formatter');
 
 module.exports = {
   checkAndSendResponse(
@@ -27,7 +27,6 @@ module.exports = {
       );
 
       const eventFormattedHours = [fullDate, endEventHours];
-      console.log('formatado ', eventFormattedHours);
 
       try {
         const result = await checkers.formatAndCheckHours(
