@@ -10,19 +10,22 @@ module.exports = {
     })
       .then((authorized) => {
         if (authorized) {
+          req.schedule = authorized.schedule;
           req.auth = {
             username: authorized.username,
             id: authorized._id,
           };
           return next();
         } else {
-          return res.status(403).end('NAO AUTENTICADO!');
+          return res.status(403).json({ message: 'NAO AUTENTICADO!' });
         }
       })
       .catch((error) => res.status(500).send(error));
   },
 
   async login(req, res) {
+    if (req.query?.getschedule)
+      return res.json({ ...req.auth, schedule: req.schedule });
     return res.json(req.auth);
   },
 };
