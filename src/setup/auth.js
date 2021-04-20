@@ -60,13 +60,19 @@ module.exports = {
   },
 
   async login(req, res) {
-    if (req.query?.getdata)
+    if (req.query?.token) {
+      return res.json({
+        ...req.auth,
+        token: req.token,
+      });
+    }
+    if (req.query?.getdata) {
       return res.json({
         ...req.auth,
         schedule: req.schedule,
         services: req.services,
-        token: req.token,
       });
+    }
     return res.json(req.auth);
   },
 };
