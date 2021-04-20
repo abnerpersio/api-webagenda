@@ -25,7 +25,7 @@ routes.get('/users', adminVerify, UserController.findIdByName);
 
 routes.get('/users/:id', UserController.show);
 routes.post('/users', adminVerify, UserController.create);
-routes.put('/users/:id', adminVerify, UserController.update);
+routes.put('/users/:id', UserController.update);
 routes.post('/users/:id/horarios', UserController.addSpecialOpening);
 routes.post('/users/:id/closed', UserController.addSpecialClose);
 routes.post('/users/:id/services', UserController.addService);
