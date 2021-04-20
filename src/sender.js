@@ -1,7 +1,9 @@
+const fetch = require('node-fetch');
 require('dotenv').config();
 
 module.exports = {
   async notifier(title, message, notificationToken) {
+    console.log('env', process.env.PORT);
     const bodyObj = {
       notification: {
         title: title,
@@ -15,11 +17,12 @@ module.exports = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: process.env.NOTIFICATIONS_TOKEN,
+        Authorization: `key=${process.env.NOTIFICATIONS_TOKEN}`,
       },
       body: JSON.stringify(bodyObj),
     })
       .then((response) => {
+        // console.log(response);
         return;
       })
       .catch((err) => {
