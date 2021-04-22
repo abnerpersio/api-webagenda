@@ -276,6 +276,7 @@ module.exports = {
       return this.calculateFreeTimes(
         specialOpeningArray,
         openTime,
+        workingInfo,
         scheduleArray,
         closedTime
       )
@@ -322,6 +323,7 @@ module.exports = {
   calculateFreeTimes(
     specialOpeningTime = required('horario abertura especial'),
     openingTime = required('horario abertura'),
+    workingInfo = required('aberturas'),
     schedule = required('agenda'),
     closingTime = required('horario fechamento')
   ) {
@@ -329,6 +331,14 @@ module.exports = {
       function checkTrue(input) {
         if (input?.length > 0) return input.some(checkTrue);
         return input == true;
+      }
+
+      const dayEvent = moment(openingTime[0], fullDateFormatPattern).format(
+        dayFormatPattern
+      );
+
+      if (!workingInfo[dayEvent].working) {
+        resolve([]);
       }
 
       function orderArrayAndGetNew(array) {

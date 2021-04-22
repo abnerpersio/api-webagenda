@@ -37,7 +37,7 @@ module.exports = {
               text:
                 response.length > 0
                   ? 'Escolha o melhor horário para você!'
-                  : 'Que pena! Já estamos cheios nesse dia',
+                  : 'Que pena! Não temos mais horários para esse dia',
               options: [],
             };
             response.map((hour, index) => {
