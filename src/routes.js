@@ -6,7 +6,7 @@ const routesWithoutAuth = express.Router();
 const UserController = require('./controllers/UserController');
 const ScheduleController = require('./controllers/ScheduleController');
 const { getFreeHours } = require('./webhooks/freeHours');
-// const getChat = require('./webhooks/getChatId');
+const { getId } = require('./webhooks/getChatId');
 const { getService } = require('./webhooks/services');
 const { authMiddleware, login } = require('./setup/auth');
 
@@ -46,10 +46,10 @@ routesWithAuth.put('/events/:event', ScheduleController.update);
 routesWithAuth.delete('/events/:event', ScheduleController.delete);
 
 routesWithAuth.get('/webhooks/freehours', getFreeHours);
+routesWithoutAuth.get('/webhooks/chatid', getId);
 routesWithoutAuth.get('/webhooks/services', getService);
 
 // didn't work in frontend w/ react, later i will see and solve that.
-// routesWithoutAuth.get('/webhooks/chatkey', getChat.getId);
 
 routesWithAuth.use('*', (req, res) =>
   res.status(404).json({ message: 'Rota não encontrada!' })
