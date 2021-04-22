@@ -70,9 +70,18 @@ module.exports = {
 
   async addService(req, res) {
     const { id } = req.params;
-    const user = await User.findById(id).select('services');
-    user.services.push(req.body);
+    const user = await User.findById(id).select('services groupName');
 
+    const { groupName } = user;
+    const group = await Group.findOne({ name: groupName }).select('services');
+
+    const { services } = req.body;
+    services.forEach((item) => {
+      user.services.push(item);
+      group.services.push(item);
+    });
+
+    await group.save();
     return await user
       .save()
       .then((updated) => {

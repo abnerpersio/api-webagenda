@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const User = mongoose.model('User');
+const Group = mongoose.model('Group');
 
 const errorHandler = require('../functions/errorHandler');
 
@@ -8,9 +8,9 @@ module.exports = {
     const { username } = req.query;
     if (!username) res.status(400).json('por favor digite um usuário');
 
-    await User.findOne({ username: username })
-      .then((user) => {
-        res.json(user?.services);
+    await Group.findOne({ username: username })
+      .then((group) => {
+        res.json(group?.services);
       })
       .catch((error) => errorHandler(error, res));
   },
