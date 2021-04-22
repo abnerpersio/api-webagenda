@@ -8,6 +8,7 @@ const listOfDays = {
   segunda: 1,
   terça: 2,
   terca: 2,
+  'terÃ§a': 2,
   quarta: 3,
   quinta: 4,
   sexta: 5,

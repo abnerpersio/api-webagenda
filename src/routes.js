@@ -1,12 +1,14 @@
 require('dotenv').config();
 const express = require('express');
-const routes = express.Router();
+const routesWithAuth = express.Router();
+const routesWithoutAuth = express.Router();
 
 const UserController = require('./controllers/UserController');
 const ScheduleController = require('./controllers/ScheduleController');
-const freeHoursHook = require('./webhooks/freeHours');
+const { getFreeHours } = require('./webhooks/freeHours');
 // const getChat = require('./webhooks/getChatId');
-const Auth = require('./setup/auth');
+const { getService } = require('./webhooks/services');
+const { authMiddleware, login } = require('./setup/auth');
 
 const adminVerify = (req, res, next) => {
   if (
@@ -19,35 +21,38 @@ const adminVerify = (req, res, next) => {
   }
 };
 
-routes.get('/ping', (req, res) => res.send('pong!'));
+routesWithAuth.use(authMiddleware);
 
-routes.get('/users', adminVerify, UserController.findIdByName);
+routesWithAuth.get('/ping', (req, res) => res.send('pong!'));
 
-routes.get('/users/:id', UserController.show);
-routes.post('/users', adminVerify, UserController.create);
-routes.put('/users/:id', UserController.update);
-routes.post('/users/:id/horarios', UserController.addSpecialOpening);
-routes.post('/users/:id/closed', UserController.addSpecialClose);
-routes.post('/users/:id/services', UserController.addService);
+routesWithAuth.get('/users', adminVerify, UserController.findIdByName);
 
-routes.post('/groups/', UserController.newGroup);
-routes.put('/groups/:groupId', UserController.updateGroup);
+routesWithAuth.get('/users/:id', UserController.show);
+routesWithAuth.post('/users', adminVerify, UserController.create);
+routesWithAuth.put('/users/:id', UserController.update);
+routesWithAuth.post('/users/:id/horarios', UserController.addSpecialOpening);
+routesWithAuth.post('/users/:id/closed', UserController.addSpecialClose);
+routesWithAuth.post('/users/:id/services', UserController.addService);
 
-routes.get('/login', Auth.login);
+routesWithAuth.post('/groups/', UserController.newGroup);
+routesWithAuth.put('/groups/:groupId', UserController.updateGroup);
 
-routes.get('/events', ScheduleController.list);
-routes.get('/events/:event', ScheduleController.show);
-routes.post('/events', ScheduleController.create);
-routes.put('/events/:event', ScheduleController.update);
-routes.delete('/events/:event', ScheduleController.delete);
+routesWithAuth.get('/login', login);
 
-routes.get('/webhooks/freehours', freeHoursHook.getFreeHours);
+routesWithAuth.get('/events', ScheduleController.list);
+routesWithAuth.get('/events/:event', ScheduleController.show);
+routesWithAuth.post('/events', ScheduleController.create);
+routesWithAuth.put('/events/:event', ScheduleController.update);
+routesWithAuth.delete('/events/:event', ScheduleController.delete);
+
+routesWithAuth.get('/webhooks/freehours', getFreeHours);
+routesWithoutAuth.get('/webhooks/services', getService);
 
 // didn't work in frontend w/ react, later i will see and solve that.
-// routes.get('/webhooks/chatkey', getChat.getId);
+// routesWithoutAuth.get('/webhooks/chatkey', getChat.getId);
 
-routes.use('*', (req, res) =>
+routesWithAuth.use('*', (req, res) =>
   res.status(404).json({ message: 'Rota não encontrada!' })
 );
 
-module.exports = routes;
+module.exports = { routesWithAuth, routesWithoutAuth };

@@ -3,7 +3,6 @@ require('dotenv').config();
 
 module.exports = {
   async notifier(title, message, notificationToken) {
-    console.log('env', process.env.PORT);
     const bodyObj = {
       notification: {
         title: title,
@@ -22,7 +21,6 @@ module.exports = {
       body: JSON.stringify(bodyObj),
     })
       .then((response) => {
-        // console.log(response);
         return;
       })
       .catch((err) => {

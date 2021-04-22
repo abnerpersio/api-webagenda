@@ -14,18 +14,21 @@ module.exports = {
   async show(req, res) {
     const { id } = req.auth;
     const { event } = req.params;
+    const { professional } = req.query;
     if (!id) sendDataError('Id do usuário', res);
     if (!event) sendDataError('Evento', res);
+    if (!professional) sendDataError('Profissional', res);
 
+    const idEvent = String(event).concat(' ', professional);
     return User.findOne({
-      $and: [{ _id: id }, { 'schedule._id': event }],
+      $and: [{ _id: id }, { 'schedule._id': idEvent }],
     })
       .select('schedule')
       .then((user) => {
         if (!user) sendDataError('Evento', res);
 
         const indexShow = user.schedule.findIndex(
-          (eventSchedule) => eventSchedule._id == event
+          (eventSchedule) => eventSchedule._id == idEvent
         );
         return res.json(user.schedule[indexShow]);
       })
@@ -119,15 +122,21 @@ module.exports = {
         user.closing,
         user.schedule
       )
-      .then((response) => {
-        console.log('resposta final', response);
-        if (response) {
+      .then((formattedHours) => {
+        if (formattedHours) {
           const indexUpdate = user.schedule.findIndex(
             (eventSchedule) => eventSchedule._id == event
           );
 
           if (indexUpdate <= -1) return sendDataError('Evento', res);
-          const newEvent = Object.assign(user.schedule[indexUpdate], req.body);
+          const newEvent = Object.assign(user.schedule[indexUpdate], {
+            clientName: req.body?.clientName,
+            service: req.body?.service,
+            professional: req.body?.professional,
+            from: formattedHours[0],
+            to: formattedHours[1],
+          });
+
           user.schedule[indexUpdate] = newEvent;
           //
           user
