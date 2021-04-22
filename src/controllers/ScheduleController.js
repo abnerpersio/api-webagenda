@@ -19,6 +19,8 @@ module.exports = {
     if (!event) sendDataError('Evento', res);
     if (!professional) sendDataError('Profissional', res);
 
+    console.log('recebi ', event, 'e', professional);
+
     const idEvent = String(event).concat(' ', professional);
     return User.findOne({
       $and: [{ _id: id }, { 'schedule._id': idEvent }],
@@ -66,7 +68,6 @@ module.exports = {
         user.schedule
       )
       .then((formattedHours) => {
-        console.log('responta antes de criar', formattedHours);
         if (formattedHours) {
           var idEvent = formattedHours[0].concat(
             ' ',

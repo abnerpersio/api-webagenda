@@ -10,8 +10,10 @@ module.exports = {
 
     await Group.findOne({ name: group })
       .then((user) => {
-        console.log('user', user);
-        res.json(user?.chatId || 'usuario sem chat ainda');
+        if (user) {
+          res.json(user?.chatId);
+        }
+        res.status(400).json({ message: 'usuario sem chat ainda' });
       })
       .catch((error) => errorHandler(error, res));
   },
