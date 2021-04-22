@@ -19,8 +19,6 @@ module.exports = {
     if (!event) sendDataError('Evento', res);
     if (!professional) sendDataError('Profissional', res);
 
-    console.log('recebi ', event, 'e', professional);
-
     const idEvent = String(event).concat(' ', professional);
     return User.findOne({
       $and: [{ _id: id }, { 'schedule._id': idEvent }],
