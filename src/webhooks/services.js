@@ -8,7 +8,7 @@ module.exports = {
     const { username } = req.query;
     if (!username) res.status(400).json('por favor digite um usuário');
 
-    await Group.findOne({ username: username })
+    await Group.findOne({ name: username })
       .then((group) => {
         res.json(group?.services);
       })
