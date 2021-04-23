@@ -49,8 +49,6 @@ routesWithAuth.get('/webhooks/freehours', getFreeHours);
 routesWithoutAuth.get('/webhooks/chatid', getId);
 routesWithoutAuth.get('/webhooks/services', getService);
 
-// didn't work in frontend w/ react, later i will see and solve that.
-
 routesWithAuth.use('*', (req, res) =>
   res.status(404).json({ message: 'Rota não encontrada!' })
 );
