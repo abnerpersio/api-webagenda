@@ -42,7 +42,7 @@ routesWithAuth.get('/login', login);
 routesWithAuth.get('/events', ScheduleController.list);
 routesWithAuth.get('/events/:event', ScheduleController.show);
 routesWithAuth.post('/events', ScheduleController.create);
-routesWithAuth.put('/events/:event', ScheduleController.update);
+routesWithAuth.put('/events/:event', ScheduleController.deleteAndCreateNew);
 routesWithAuth.delete('/events/:event', ScheduleController.delete);
 
 routesWithAuth.get('/webhooks/freehours', getFreeHours);
