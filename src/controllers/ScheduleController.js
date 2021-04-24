@@ -99,55 +99,55 @@ module.exports = {
       .catch((error) => errorHandler.reqErrors(error, res));
   },
 
-  async update(req, res) {
-    const { id } = req.auth;
-    const { event } = req.params;
-    const { eventhours, service } = req.body;
-    if (!id) sendDataError('Id do usuário', res);
-    if (!event) sendDataError('Evento', res);
+  // async update(req, res) {
+  //   const { id } = req.auth;
+  //   const { event } = req.params;
+  //   const { eventhours, service } = req.body;
+  //   if (!id) sendDataError('Id do usuário', res);
+  //   if (!event) sendDataError('Evento', res);
 
-    const user = await User.findById(id).catch((error) =>
-      errorHandler.reqErrors(error, res)
-    );
+  //   const user = await User.findById(id).catch((error) =>
+  //     errorHandler.reqErrors(error, res)
+  //   );
 
-    return await checkBlocking
-      .checkAndSendResponse(
-        eventdate,
-        eventhours,
-        service,
-        user.services,
-        user.specialOpening,
-        user.opening,
-        user.closing,
-        user.schedule
-      )
-      .then((formattedHours) => {
-        if (formattedHours) {
-          const indexUpdate = user.schedule.findIndex(
-            (eventSchedule) => eventSchedule._id == event
-          );
+  //   return await checkBlocking
+  //     .checkAndSendResponse(
+  //       eventdate,
+  //       eventhours,
+  //       service,
+  //       user.services,
+  //       user.specialOpening,
+  //       user.opening,
+  //       user.closing,
+  //       user.schedule
+  //     )
+  //     .then((formattedHours) => {
+  //       if (formattedHours) {
+  //         const indexUpdate = user.schedule.findIndex(
+  //           (eventSchedule) => eventSchedule._id == event
+  //         );
 
-          if (indexUpdate <= -1) return sendDataError('Evento', res);
-          const newEvent = Object.assign(user.schedule[indexUpdate], {
-            clientName: req.body?.clientName,
-            service: req.body?.service,
-            professional: req.body?.professional,
-            from: formattedHours[0],
-            to: formattedHours[1],
-          });
+  //         if (indexUpdate <= -1) return sendDataError('Evento', res);
+  //         const newEvent = Object.assign(user.schedule[indexUpdate], {
+  //           clientName: req.body?.clientName,
+  //           service: req.body?.service,
+  //           professional: req.body?.professional,
+  //           from: formattedHours[0],
+  //           to: formattedHours[1],
+  //         });
 
-          user.schedule[indexUpdate] = newEvent;
-          //
-          user
-            .save()
-            .then((updated) => {
-              return res.json(updated.schedule[indexUpdate]);
-            })
-            .catch((error) => errorHandler.reqErrors(error, res));
-        }
-      })
-      .catch((error) => errorHandler.reqErrors(error, res));
-  },
+  //         user.schedule[indexUpdate] = newEvent;
+  //         //
+  //         user
+  //           .save()
+  //           .then((updated) => {
+  //             return res.json(updated.schedule[indexUpdate]);
+  //           })
+  //           .catch((error) => errorHandler.reqErrors(error, res));
+  //       }
+  //     })
+  //     .catch((error) => errorHandler.reqErrors(error, res));
+  // },
 
   async delete(req, res) {
     const { id } = req.auth;
@@ -169,6 +169,71 @@ module.exports = {
       .save()
       .then((updated) => {
         return res.json(updated.schedule);
+      })
+      .catch((error) => errorHandler.reqErrors(error, res));
+  },
+
+  async deleteAndCreateNew(req, res) {
+    const { id } = req.auth;
+    const { oldEventId } = req.params;
+    const { eventhours, service, eventdate } = req.body;
+    if (!id) sendDataError('Id do usuário', res);
+
+    const user = await User.findById(id).catch((error) =>
+      errorHandler.reqErrors(error, res)
+    );
+
+    return await checkBlocking
+      .checkAndSendResponse(
+        eventdate,
+        eventhours,
+        service,
+        user.services,
+        user.specialOpening,
+        user.opening,
+        user.closing,
+        user.schedule
+      )
+      .then((formattedHours) => {
+        if (formattedHours) {
+          // deleting old event
+          const indexOldEvent = user.schedule.findIndex(
+            (eventSchedule) => eventSchedule._id == oldEventId
+          );
+
+          if (indexOldEvent > -1) {
+            user.schedule.splice(indexOldEvent, 1);
+          }
+          // creating new event
+          var idEvent = formattedHours[0].concat(
+            ' ',
+            String(req.body.professional).toLowerCase()
+          );
+          const newEvent = {
+            clientName: req.body.clientName,
+            service: req.body.service,
+            professional: req.body.professional,
+            from: formattedHours[0],
+            to: formattedHours[1],
+          };
+          user.schedule.push(newEvent);
+          //
+          //
+          user
+            .save()
+            .then((updated) => {
+              const indexEvent = user.schedule.findIndex(
+                (eventSchedule) => eventSchedule._id == idEvent
+              );
+              notifier(
+                'Um cliente acaba de fazer um agendamento!',
+                'confira agora mesmo.',
+                user.notificationsToken
+              );
+              return res.status(201).json(updated.schedule[indexEvent]);
+            })
+            .catch((error) => errorHandler.reqErrors(error, res));
+        }
       })
       .catch((error) => errorHandler.reqErrors(error, res));
   },
