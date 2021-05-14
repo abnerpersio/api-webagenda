@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
-const checkBlocking = require('../functions/checkBlocking');
+const {
+  checkAndSendResponse,
+  checkCustomEventAndSendResponse,
+} = require('../functions/checkBlocking');
 
 const User = mongoose.model('User');
 
@@ -54,17 +57,16 @@ module.exports = {
       errorHandler.reqErrors(error, res)
     );
 
-    return await checkBlocking
-      .checkAndSendResponse(
-        eventdate,
-        eventhours,
-        service,
-        user.services,
-        user.specialOpening,
-        user.opening,
-        user.closing,
-        user.schedule
-      )
+    return await checkAndSendResponse(
+      eventdate,
+      eventhours,
+      service,
+      user.services,
+      user.specialOpening,
+      user.opening,
+      user.closing,
+      user.schedule
+    )
       .then((formattedHours) => {
         if (formattedHours) {
           var idEvent = formattedHours[0].concat(
@@ -99,55 +101,53 @@ module.exports = {
       .catch((error) => errorHandler.reqErrors(error, res));
   },
 
-  // async update(req, res) {
-  //   const { id } = req.auth;
-  //   const { event } = req.params;
-  //   const { eventhours, service } = req.body;
-  //   if (!id) sendDataError('Id do usuário', res);
-  //   if (!event) sendDataError('Evento', res);
+  async createCustomEvent(req, res) {
+    const { id } = req.auth;
+    const { eventdate, eventstarthours, eventendhours } = req.body;
+    if (!id) sendDataError('Id do usuário', res);
 
-  //   const user = await User.findById(id).catch((error) =>
-  //     errorHandler.reqErrors(error, res)
-  //   );
+    const user = await User.findById(id)
+      .select('schedule')
+      .catch((error) => errorHandler.reqErrors(error, res));
 
-  //   return await checkBlocking
-  //     .checkAndSendResponse(
-  //       eventdate,
-  //       eventhours,
-  //       service,
-  //       user.services,
-  //       user.specialOpening,
-  //       user.opening,
-  //       user.closing,
-  //       user.schedule
-  //     )
-  //     .then((formattedHours) => {
-  //       if (formattedHours) {
-  //         const indexUpdate = user.schedule.findIndex(
-  //           (eventSchedule) => eventSchedule._id == event
-  //         );
-
-  //         if (indexUpdate <= -1) return sendDataError('Evento', res);
-  //         const newEvent = Object.assign(user.schedule[indexUpdate], {
-  //           clientName: req.body?.clientName,
-  //           service: req.body?.service,
-  //           professional: req.body?.professional,
-  //           from: formattedHours[0],
-  //           to: formattedHours[1],
-  //         });
-
-  //         user.schedule[indexUpdate] = newEvent;
-  //         //
-  //         user
-  //           .save()
-  //           .then((updated) => {
-  //             return res.json(updated.schedule[indexUpdate]);
-  //           })
-  //           .catch((error) => errorHandler.reqErrors(error, res));
-  //       }
-  //     })
-  //     .catch((error) => errorHandler.reqErrors(error, res));
-  // },
+    return await checkCustomEventAndSendResponse(
+      eventdate,
+      eventstarthours,
+      eventendhours,
+      user.schedule
+    )
+      .then((formattedHours) => {
+        if (formattedHours) {
+          var idEvent = formattedHours[0].concat(
+            ' ',
+            String(req.body.professional).toLowerCase()
+          );
+          const newEvent = {
+            clientName: 'Fechamento',
+            professional: req.body.professional,
+            from: formattedHours[0],
+            to: formattedHours[1],
+          };
+          user.schedule.push(newEvent);
+          //
+          user
+            .save()
+            .then((updated) => {
+              const indexEvent = user.schedule.findIndex(
+                (eventSchedule) => eventSchedule._id == idEvent
+              );
+              notifier(
+                'Um cliente acaba de fazer um agendamento!',
+                'confira agora mesmo.',
+                user.notificationsToken
+              );
+              return res.status(201).json(updated.schedule[indexEvent]);
+            })
+            .catch((error) => errorHandler.reqErrors(error, res));
+        }
+      })
+      .catch((error) => errorHandler.reqErrors(error, res));
+  },
 
   async delete(req, res) {
     const { id } = req.auth;

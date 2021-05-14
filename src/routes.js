@@ -31,7 +31,6 @@ routesWithAuth.get('/users/:id', UserController.show);
 routesWithAuth.post('/users', adminVerify, UserController.create);
 routesWithAuth.put('/users/:id', UserController.update);
 routesWithAuth.post('/users/:id/horarios', UserController.addSpecialOpening);
-routesWithAuth.post('/users/:id/closed', UserController.addSpecialClose);
 routesWithAuth.post('/users/:id/services', UserController.addService);
 
 routesWithAuth.post('/groups/', UserController.newGroup);
@@ -44,6 +43,7 @@ routesWithAuth.get('/events/:event', ScheduleController.show);
 routesWithAuth.post('/events', ScheduleController.create);
 routesWithAuth.put('/events/:event', ScheduleController.deleteAndCreateNew);
 routesWithAuth.delete('/events/:event', ScheduleController.delete);
+routesWithAuth.post('/custom/events', ScheduleController.createCustomEvent);
 
 routesWithAuth.get('/webhooks/freehours', getFreeHours);
 routesWithoutAuth.get('/webhooks/chatid', getId);

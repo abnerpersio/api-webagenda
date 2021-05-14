@@ -3,6 +3,7 @@ const User = mongoose.model('User');
 const Group = mongoose.model('Group');
 
 const errorHandler = require('../functions/errorHandler');
+const { format } = require('../functions/formatter');
 
 module.exports = {
   async show(req, res) {
@@ -25,12 +26,8 @@ module.exports = {
       runValidators: true,
     })
       .then((user) => {
-        const {
-          specialOpening,
-          schedule,
-          services,
-          ...userUpdated
-        } = user.toObject();
+        const { specialOpening, schedule, services, ...userUpdated } =
+          user.toObject();
         res.json(userUpdated);
       })
       .catch((error) => errorHandler.reqErrors(error, res));
@@ -45,25 +42,22 @@ module.exports = {
   async addSpecialOpening(req, res) {
     const { id } = req.params;
     const user = await User.findById(id).select('specialOpening');
-    user.specialOpening.push(req.body);
+
+    const { eventdate, from, to } = req.body;
+
+    const formattedDate = format(eventdate);
+    const fullStartDate = formattedDate?.split(' ')[0]?.concat(' ', from);
+    const fullEndDate = formattedDate?.split(' ')[0]?.concat(' ', to);
+
+    user.specialOpening.push({ from: fullStartDate, to: fullEndDate });
 
     return await user
       .save()
       .then((updated) => {
-        return res.json(updated.specialOpening);
-      })
-      .catch((error) => errorHandler.reqErrors(error, res));
-  },
-
-  async addSpecialClose(req, res) {
-    const { id } = req.params;
-    const user = await User.findById(id).select('specialOpening');
-    user.specialOpening.push(req.body);
-
-    return await user
-      .save()
-      .then((updated) => {
-        return res.json(updated.specialOpening);
+        var index = updated?.specialOpening?.findIndex(
+          (item) => item?.from === fullStartDate && item?.to === fullEndDate
+        );
+        return res.json(updated.specialOpening[index]);
       })
       .catch((error) => errorHandler.reqErrors(error, res));
   },
@@ -76,7 +70,7 @@ module.exports = {
     const group = await Group.findOne({ name: groupName }).select('services');
 
     const { services } = req.body;
-    services.forEach((item) => {
+    services?.forEach((item) => {
       user.services.push(item);
       group.services.push(item);
     });

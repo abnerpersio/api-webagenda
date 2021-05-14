@@ -46,7 +46,6 @@ const EventSchema = new mongoose.Schema({
   service: {
     type: String,
     lowercase: true,
-    required: [true, 'ei! faltou o serviço'],
   },
   professional: {
     type: String,
