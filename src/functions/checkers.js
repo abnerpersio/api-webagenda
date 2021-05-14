@@ -103,15 +103,15 @@ module.exports = {
     const openingTime = returnOpening(openingInfo, dayEvent);
     const closingTime = returnOpening(closingInfo, dayEvent);
 
-    const [
-      formattedStartWorking,
-      formattedEndWorking,
-    ] = this.getCompleteDate(startEventHour, [openingTime[0], openingTime[1]]);
+    const [formattedStartWorking, formattedEndWorking] = this.getCompleteDate(
+      startEventHour,
+      [openingTime[0], openingTime[1]]
+    );
 
-    const [
-      formattedStartClose,
-      formattedEndClose,
-    ] = this.getCompleteDate(startEventHour, [closingTime[0], closingTime[1]]);
+    const [formattedStartClose, formattedEndClose] = this.getCompleteDate(
+      startEventHour,
+      [closingTime[0], closingTime[1]]
+    );
 
     const specialOpeningArray = returnArray(specialOpeningTime);
     const openTime = [formattedStartWorking, formattedEndWorking];
@@ -243,6 +243,32 @@ module.exports = {
       .catch((error) => ({ status: 500, response: error }));
   },
 
+  customEventCheckHours(
+    hoursEvent = required('horario do evento'),
+    schedule = required('agenda')
+  ) {
+    //
+    function checkTrue(input) {
+      if (input?.length > 0) return input.some(checkTrue);
+      return input == true;
+    }
+
+    function getSomeInArray(arr, cb) {
+      return arr.map((item) => item.some(cb)).some(cb);
+    }
+
+    return this.checkEventBlocking(schedule, hoursEvent)
+      .then((result) => {
+        var checkingArr = getSomeInArray(result, checkTrue);
+        if (checkingArr) {
+          return { status: 500, response: 'evento bloqueando' };
+        } else {
+          return { status: 200 };
+        }
+      })
+      .catch((error) => ({ status: 500, response: error }));
+  },
+
   returnFreeTimes(
     eventDate,
     serviceOption,
@@ -268,10 +294,32 @@ module.exports = {
         schedule
       );
       //
-      const indexService = services.findIndex(
-        (eventSchedule) => eventSchedule.serviceName == serviceOption
-      );
-      const serviceDuration = services[indexService].serviceTime;
+      function splitServices(servicesOptionObj) {
+        return servicesOptionObj.split(',')
+          ? servicesOptionObj.split(',')
+          : [services];
+      }
+
+      function calculateDurations(arr) {
+        let sum = 0;
+        arr.forEach(
+          (itemIndex) => (sum += Number(services[itemIndex].serviceTime))
+        );
+        return sum;
+      }
+
+      servicesArray = splitServices(serviceOption);
+      //
+      let indexServices = [];
+      servicesArray.forEach((item, index) => {
+        if (item) {
+          indexServices[index] = services.findIndex(
+            (eventSchedule) => eventSchedule.serviceName === item
+          );
+        }
+      });
+      //
+      const serviceDuration = String(calculateDurations(indexServices));
       //
       return this.calculateFreeTimes(
         specialOpeningArray,
@@ -454,6 +502,23 @@ module.exports = {
           scheduleArray
         )
       );
+    });
+  },
+
+  checkHoursCustomEvent(eventFormattedHours, schedule) {
+    return new Promise((resolve, reject) => {
+      //
+      function returnArray(array) {
+        var arr = [];
+        return (arr = array.map(
+          (object, index) => (arr[index] = [object.from, object.to])
+        ));
+      }
+      //
+      const hoursEvent = eventFormattedHours;
+      const scheduleArray = returnArray(schedule);
+      //
+      resolve(this.customEventCheckHours(hoursEvent, scheduleArray));
     });
   },
 };
