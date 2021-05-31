@@ -7,8 +7,8 @@ module.exports = {
       notification: {
         title: title,
         body: message,
-        click_action: 'https://d3aqqqs7b090ob.cloudfront.net/',
-        icon: 'https://d3aqqqs7b090ob.cloudfront.net/logo192.png',
+        click_action: 'https://painel.webatom.com.br/',
+        icon: 'https://painel.webatom.com.br/logo192.png',
       },
       to: notificationToken,
     };
