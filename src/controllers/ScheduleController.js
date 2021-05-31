@@ -13,7 +13,7 @@ const sendDataError = (data, res) => {
   return res.status(400).send(`${data} não encontrado!`);
 };
 
-module.exports = {
+class ScheduleController {
   async show(req, res) {
     const { id } = req.auth;
     const { event } = req.params;
@@ -36,17 +36,74 @@ module.exports = {
         return res.json(user.schedule[indexShow]);
       })
       .catch((error) => errorHandler.reqErrors(error, res));
-  },
+  }
 
   async list(req, res) {
     const { id } = req.auth;
+    const { clientPhone } = req.query;
+
     if (!id) sendDataError('Id do usuário', res);
+    if (clientPhone) {
+      return await User.findOne({
+        $and: [{ _id: id }, { 'schedule.clientPhone': clientPhone }],
+      })
+        .select('schedule')
+        .then((user) => {
+          if (!user) sendDataError('Evento', res);
+
+          const events = user?.schedule.find(
+            (eventSchedule) => eventSchedule.clientPhone === clientPhone
+          );
+          return res.json(events);
+        })
+        .catch((error) => console.log('errado: ', error));
+    }
 
     return await User.findById(id)
       .select('schedule')
       .then((user) => res.json(user?.schedule))
       .catch((error) => errorHandler.reqErrors(error, res));
-  },
+  }
+
+  async listEventsBlipBuilder(req, res) {
+    const { id } = req.auth;
+    const { clientPhone } = req.query;
+
+    if (!id) sendDataError('Id do usuário', res);
+    if (clientPhone) {
+      return await User.findOne({
+        $and: [{ _id: id }, { 'schedule.clientPhone': clientPhone }],
+      })
+        .select('schedule')
+        .then((user) => {
+          if (!user) sendDataError('Evento', res);
+
+          const events = user?.schedule.find(
+            (eventSchedule) => eventSchedule.clientPhone === clientPhone
+          );
+
+          const blipContent = {
+            text:
+              response.length > 0
+                ? 'Qual foi a data do evento?'
+                : 'Que pena! Não encontrei eventos para o seu telefone',
+            options: [],
+          };
+          events.map((event, index) => {
+            blipContent.options.push({
+              text: `${event.from.split(' ')[0]} às ${
+                event.from.split(' ')[1]
+              }`,
+              order: index + 1,
+              type: 'text/plain',
+              value: event.id,
+            });
+          });
+          return res.json(blipContent);
+        })
+        .catch((error) => console.log('errado: ', error));
+    }
+  }
 
   async create(req, res) {
     const { id } = req.auth;
@@ -75,6 +132,7 @@ module.exports = {
           );
           const newEvent = {
             clientName: req.body.clientName,
+            clientPhone: req.body.clientPhone,
             service: req.body.service,
             professional: req.body.professional,
             from: formattedHours[0],
@@ -99,7 +157,7 @@ module.exports = {
         }
       })
       .catch((error) => errorHandler.reqErrors(error, res));
-  },
+  }
 
   async createCustomEvent(req, res) {
     const { id } = req.auth;
@@ -147,7 +205,7 @@ module.exports = {
         }
       })
       .catch((error) => errorHandler.reqErrors(error, res));
-  },
+  }
 
   async delete(req, res) {
     const { id } = req.auth;
@@ -171,7 +229,7 @@ module.exports = {
         return res.json(updated.schedule);
       })
       .catch((error) => errorHandler.reqErrors(error, res));
-  },
+  }
 
   async deleteAndCreateNew(req, res) {
     const { id } = req.auth;
@@ -236,5 +294,7 @@ module.exports = {
         }
       })
       .catch((error) => errorHandler.reqErrors(error, res));
-  },
-};
+  }
+}
+
+module.exports = new ScheduleController();

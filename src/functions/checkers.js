@@ -188,59 +188,67 @@ module.exports = {
       return arr.map((item) => item.some(cb)).some(cb);
     }
 
-    return this.checkSpecialWorking(specialOpening, hoursEvent)
-      .then((result) => {
-        var checkingArr = getSomeInArray(result, checkTrue);
-        if (checkingArr) {
-          return this.checkEventBlocking(schedule, hoursEvent)
-            .then((result) => {
-              var checkingArr = getSomeInArray(result, checkTrue);
-              if (checkingArr) {
-                return { status: 500, response: 'evento bloqueando' };
-              } else {
-                return { status: 200 };
-              }
-            })
-            .catch((error) => ({ status: 500, response: error }));
-        }
-        //
-        const dayEvent = moment(hoursEvent, fullDateFormatPattern).format(
-          dayFormatPattern
-        );
-        if (!workingInfo[dayEvent]['working']) {
-          return { status: 500, response: 'não trabalha no dia' };
-        }
-        //
-        return this.checkWorkingInHours(openingTime, hoursEvent)
+    return moment(hoursEvent, fullDateFormatPattern).isBefore(moment())
+      ? { status: 500, response: 'este horário já passou' }
+      : this.checkSpecialWorking(specialOpening, hoursEvent)
           .then((result) => {
-            var checkingArr = result.every(checkTrue);
+            var checkingArr = getSomeInArray(result, checkTrue);
             if (checkingArr) {
-              return this.checkClosedInHours(closedTime, hoursEvent)
+              return this.checkEventBlocking(schedule, hoursEvent)
                 .then((result) => {
-                  var checkingArr = result.every(checkFalse);
+                  var checkingArr = getSomeInArray(result, checkTrue);
                   if (checkingArr) {
-                    return this.checkEventBlocking(schedule, hoursEvent)
-                      .then((result) => {
-                        var checkingArr = getSomeInArray(result, checkTrue);
-                        if (checkingArr) {
-                          return { status: 500, response: 'evento bloqueando' };
-                        } else {
-                          return { status: 200 };
-                        }
-                      })
-                      .catch((error) => ({ status: 500, response: error }));
+                    return { status: 500, response: 'evento bloqueando' };
                   } else {
-                    return { status: 500, response: 'fechado nesse horário' };
+                    return { status: 200 };
                   }
                 })
                 .catch((error) => ({ status: 500, response: error }));
-            } else {
-              return { status: 500, response: 'fechados no horario' };
             }
+            //
+            const dayEvent = moment(hoursEvent, fullDateFormatPattern).format(
+              dayFormatPattern
+            );
+            if (!workingInfo[dayEvent]['working']) {
+              return { status: 500, response: 'não trabalha no dia' };
+            }
+            //
+            return this.checkWorkingInHours(openingTime, hoursEvent)
+              .then((result) => {
+                var checkingArr = result.every(checkTrue);
+                if (checkingArr) {
+                  return this.checkClosedInHours(closedTime, hoursEvent)
+                    .then((result) => {
+                      var checkingArr = result.every(checkFalse);
+                      if (checkingArr) {
+                        return this.checkEventBlocking(schedule, hoursEvent)
+                          .then((result) => {
+                            var checkingArr = getSomeInArray(result, checkTrue);
+                            if (checkingArr) {
+                              return {
+                                status: 500,
+                                response: 'evento bloqueando',
+                              };
+                            } else {
+                              return { status: 200 };
+                            }
+                          })
+                          .catch((error) => ({ status: 500, response: error }));
+                      } else {
+                        return {
+                          status: 500,
+                          response: 'fechado nesse horário',
+                        };
+                      }
+                    })
+                    .catch((error) => ({ status: 500, response: error }));
+                } else {
+                  return { status: 500, response: 'fechados no horario' };
+                }
+              })
+              .catch((error) => ({ status: 500, response: error }));
           })
           .catch((error) => ({ status: 500, response: error }));
-      })
-      .catch((error) => ({ status: 500, response: error }));
   },
 
   customEventCheckHours(

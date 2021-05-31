@@ -5,20 +5,20 @@ const Group = mongoose.model('Group');
 const errorHandler = require('../functions/errorHandler');
 const { format } = require('../functions/formatter');
 
-module.exports = {
+class UserController {
   async show(req, res) {
-    const prop = req.query.prop;
+    const { prop } = req.query;
 
     return await User.findById(req.params.id)
       .then((user) => res.json(user?.[prop] ? user?.[prop] : user))
       .catch((error) => errorHandler.reqErrors(error, res));
-  },
+  }
 
   async create(req, res) {
     return await User.create(req.body)
       .then((user) => res.status(201).json(user))
       .catch((error) => errorHandler.reqErrors(error, res));
-  },
+  }
 
   async update(req, res) {
     return await User.findByIdAndUpdate(req.params.id, req.body, {
@@ -31,13 +31,13 @@ module.exports = {
         res.json(userUpdated);
       })
       .catch((error) => errorHandler.reqErrors(error, res));
-  },
+  }
 
   async findIdByName(req, res) {
     return await User.findOne({ username: req.query.username })
       .then((user) => res.json({ id: user.id }))
       .catch((error) => errorHandler.reqErrors(error, res));
-  },
+  }
 
   async addSpecialOpening(req, res) {
     const { id } = req.params;
@@ -60,7 +60,7 @@ module.exports = {
         return res.json(updated.specialOpening[index]);
       })
       .catch((error) => errorHandler.reqErrors(error, res));
-  },
+  }
 
   async addService(req, res) {
     const { id } = req.params;
@@ -82,7 +82,7 @@ module.exports = {
         return res.json(updated.services);
       })
       .catch((error) => errorHandler.reqErrors(error, res));
-  },
+  }
 
   async newGroup(req, res) {
     await Group.create(req.body)
@@ -90,7 +90,7 @@ module.exports = {
         res.json(group);
       })
       .catch((error) => errorHandler.reqErrors(error, res));
-  },
+  }
 
   async updateGroup(req, res) {
     const { groupId } = req.params;
@@ -101,5 +101,7 @@ module.exports = {
         res.json(updated);
       })
       .catch((error) => errorHandler.reqErrors(error, res));
-  },
-};
+  }
+}
+
+module.exports = new UserController();

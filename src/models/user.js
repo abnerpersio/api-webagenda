@@ -43,6 +43,7 @@ const EventSchema = new mongoose.Schema({
     type: String,
     required: [true, 'ei! faltou o nome do cliente'],
   },
+  clientPhone: String,
   service: {
     type: String,
     lowercase: true,
