@@ -49,6 +49,10 @@ routes.post('/custom/events', ScheduleController.createCustomEvent);
 
 routes.get('/webhooks/freehours', getFreeHours);
 
+routes.get('/debug-sentry', function mainHandler(req, res) {
+  throw new Error('Provocando um erro no Sentry!');
+});
+
 routes.use('*', (req, res) =>
   res.status(404).json({ message: 'Rota não encontrada!' })
 );

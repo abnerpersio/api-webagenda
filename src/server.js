@@ -1,19 +1,37 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const Sentry = require('@sentry/node');
+const Tracing = require('@sentry/tracing');
 require('express-async-errors');
 
 const app = express();
 require('./setup/db');
 
+Sentry.init({
+  dsn: 'https://c7685a2223fa4d5a9b147b1b7cb3c50e@o770029.ingest.sentry.io/5795339',
+  integrations: [
+    new Sentry.Integrations.Http({ tracing: true }),
+    new Tracing.Integrations.Express({ app }),
+  ],
+
+  tracesSampleRate: 1.0,
+});
+
 const routes = require('./routes');
-const logger = require('./setup/logger');
 const port = process.env.PORT || 8080;
 
 app.use(cors());
 app.use(express.json());
-app.use(logger);
+//  Sentry logger service
+app.use(Sentry.Handlers.requestHandler());
+app.use(Sentry.Handlers.tracingHandler());
+//  Sentry logger service
 app.use(routes);
+
+//  Sentry error handler service
+app.use(Sentry.Handlers.errorHandler());
+//  Sentry error handler service
 app.use((error, req, res, next) => {
   console.error(error);
   res.sendStatus(500);
