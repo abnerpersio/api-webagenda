@@ -44,49 +44,13 @@ class ScheduleController {
 
     if (!id) sendDataError('Id do usuário', res);
     if (clientPhone) {
-      return await User.findOne({
-        $and: [{ _id: id }, { 'schedule.clientPhone': clientPhone }],
-      })
-        .select('schedule')
-        .then((user) => {
-          if (!user) sendDataError('Evento', res);
-
-          const events = user?.schedule.find(
-            (eventSchedule) => eventSchedule.clientPhone === clientPhone
-          );
-          return res.json(events);
-        })
-        .catch((error) => console.log('errado: ', error));
-    }
-
-    return await User.findById(id)
-      .select('schedule')
-      .then((user) => res.json(user?.schedule))
-      .catch((error) => errorHandler.reqErrors(error, res));
-  }
-
-  async listEventsBlipBuilder(req, res) {
-    const { id } = req.auth;
-    const { clientPhone } = req.query;
-
-    if (!id) sendDataError('Id do usuário', res);
-    if (clientPhone) {
-      return await User.findOne({
-        $and: [{ _id: id }, { 'schedule.clientPhone': clientPhone }],
-      })
-        .select('schedule')
-        .then((user) => {
-          if (!user) sendDataError('Evento', res);
-
-          const events = user?.schedule.find(
-            (eventSchedule) => eventSchedule.clientPhone === clientPhone
-          );
-
+      const listEventsBlipBuilder = (events) => {
+        if (events) {
           const blipContent = {
             text:
-              response.length > 0
+              events.length > 0
                 ? 'Qual foi a data do evento?'
-                : 'Que pena! Não encontrei eventos para o seu telefone',
+                : 'Que pena! Não encontrei eventos para esse telefone',
             options: [],
           };
           events.map((event, index) => {
@@ -99,10 +63,31 @@ class ScheduleController {
               value: event.id,
             });
           });
+          return blipContent;
+        } else return undefined;
+      };
+
+      return await User.findOne({
+        $and: [{ _id: id }, { 'schedule.clientPhone': clientPhone }],
+      })
+        .select('schedule')
+        .then((user) => {
+          if (!user) sendDataError('Evento', res);
+
+          const events = user?.schedule.filter(
+            (eventSchedule) => eventSchedule.clientPhone === clientPhone
+          );
+
+          const blipContent = listEventsBlipBuilder(events);
           return res.json(blipContent);
         })
         .catch((error) => console.log('errado: ', error));
     }
+
+    return await User.findById(id)
+      .select('schedule')
+      .then((user) => res.json(user?.schedule))
+      .catch((error) => errorHandler.reqErrors(error, res));
   }
 
   async create(req, res) {
