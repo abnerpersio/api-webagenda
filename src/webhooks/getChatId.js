@@ -15,6 +15,6 @@ module.exports = {
         }
         res.status(400).json({ message: 'usuario sem chat ainda' });
       })
-      .catch((error) => errorHandler(error, res));
+      .catch((error) => errorHandler.reqErrors(error, res));
   },
 };

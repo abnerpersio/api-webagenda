@@ -12,6 +12,6 @@ module.exports = {
       .then((group) => {
         res.json(group?.services);
       })
-      .catch((error) => errorHandler(error, res));
+      .catch((error) => errorHandler.reqErrors(error, res));
   },
 };
