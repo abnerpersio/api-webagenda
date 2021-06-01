@@ -11,7 +11,7 @@ module.exports = {
     await Group.findOne({ name: group })
       .then((user) => {
         if (user) {
-          res.json(user?.chatId);
+          return res.json(user?.chatId);
         }
         res.status(400).json({ message: 'usuario sem chat ainda' });
       })
