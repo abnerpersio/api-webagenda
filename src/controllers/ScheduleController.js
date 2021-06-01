@@ -211,7 +211,7 @@ class ScheduleController {
     return await user
       .save()
       .then((updated) => {
-        return res.json(updated.schedule);
+        return res.sendStatus(204);
       })
       .catch((error) => errorHandler.reqErrors(error, res));
   }
