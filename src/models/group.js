@@ -1,14 +1,6 @@
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
 
-const ServiceSchema = new mongoose.Schema(
-  {
-    serviceName: { type: String, lowercase: true, required: true },
-    serviceTime: { type: String, required: true },
-  },
-  { _id: false }
-);
-
 const GroupSchema = new mongoose.Schema(
   {
     _id: {
@@ -21,7 +13,6 @@ const GroupSchema = new mongoose.Schema(
       unique: true,
       required: [true, 'digite um nome de grupo!'],
     },
-    services: [ServiceSchema],
     chatId: String,
   },
   {
