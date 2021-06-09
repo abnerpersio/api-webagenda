@@ -21,6 +21,14 @@ class UserController {
   }
 
   async update(req, res) {
+    const { groupName } = req.body;
+    if (groupName) {
+      const group = await Group.findOne({ name: groupName });
+      if (!group) {
+        return res.status(400).json({ message: 'este grupo não existe' });
+      }
+    }
+
     return await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
@@ -64,18 +72,13 @@ class UserController {
 
   async addService(req, res) {
     const { id } = req.params;
-    const user = await User.findById(id).select('services groupName');
+    const user = await User.findById(id).select('services');
 
-    const { groupName } = user;
-    const group = await Group.findOne({ name: groupName }).select('services');
-
-    const { services } = req.body;
-    services?.forEach((item) => {
+    const { newServices } = req.body;
+    newServices?.forEach((item) => {
       user.services.push(item);
-      group.services.push(item);
     });
 
-    await group.save();
     return await user
       .save()
       .then((updated) => {
