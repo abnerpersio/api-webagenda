@@ -71,7 +71,7 @@ class ScheduleController {
           const blipContent = {
             text:
               events.length > 0
-                ? 'Qual foi a data do evento?'
+                ? 'Em qual dos seus eventos deseja mexer?'
                 : 'Que pena! Não encontrei eventos para esse telefone',
             options: [],
           };
@@ -79,7 +79,7 @@ class ScheduleController {
             blipContent.options.push({
               text: `${event.from.split(' ')[0]} às ${
                 event.from.split(' ')[1]
-              }`,
+              } com ${event.professional}`,
               order: index + 1,
               type: 'text/plain',
               value: event.id,
