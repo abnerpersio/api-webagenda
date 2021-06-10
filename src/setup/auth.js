@@ -47,7 +47,7 @@ module.exports = {
           );
           req.schedule = authorized.schedule;
           req.services = authorized.services;
-          req.professionals = authorized.professional;
+          req.professional = authorized.professional;
           req.auth = {
             username: authorized.username,
             id: authorized._id,
