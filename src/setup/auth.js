@@ -22,6 +22,7 @@ module.exports = {
           if (authorized) {
             req.schedule = authorized.schedule;
             req.services = authorized.services;
+            req.professional = authorized.professional;
             req.auth = {
               username: authorized.username,
               id: authorized._id,
