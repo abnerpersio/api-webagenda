@@ -13,14 +13,32 @@ const sendDataError = (data, res) => {
   return res.status(400).send(`${data} não encontrado!`);
 };
 
+const formatPhoneNumber = (phoneNumber) => {
+  const isPhoneNumber = /\(?\d{2,}\)?[ -]?\d{4,}[\-\s]?\d{4}/.test(phoneNumber);
+
+  if (!isPhoneNumber) {
+    return null;
+  }
+
+  let cleaned = ('' + phoneNumber).replace(/\D/g, '');
+
+  let match = cleaned.match(/^(\d{2})(\d{4,5})(\d{4})$/);
+
+  if (match) {
+    return '(' + match[1] + ') ' + match[2] + '-' + match[3];
+  }
+
+  return null;
+};
+
 class ScheduleController {
   async show(req, res) {
     const { id } = req.auth;
     const { event } = req.params;
     const { professional } = req.query;
-    if (!id) sendDataError('Id do usuário', res);
-    if (!event) sendDataError('Evento', res);
-    if (!professional) sendDataError('Profissional', res);
+    if (!id) return sendDataError('Id do usuário', res);
+    if (!event) return sendDataError('Evento', res);
+    if (!professional) return sendDataError('Profissional', res);
 
     const idEvent = String(event).concat(' ', professional);
     return User.findOne({
@@ -28,7 +46,7 @@ class ScheduleController {
     })
       .select('schedule')
       .then((user) => {
-        if (!user) sendDataError('Evento', res);
+        if (!user) return sendDataError('Evento', res);
 
         const indexShow = user.schedule.findIndex(
           (eventSchedule) => eventSchedule._id == idEvent
@@ -42,8 +60,12 @@ class ScheduleController {
     const { id } = req.auth;
     const { clientPhone } = req.query;
 
-    if (!id) sendDataError('Id do usuário', res);
+    if (!id) return sendDataError('Id do usuário', res);
+
     if (clientPhone) {
+      const formattedClientPhone = formatPhoneNumber(clientPhone);
+      if (!formattedClientPhone) return sendDataError('Telefone inválido', res);
+
       const listEventsBlipBuilder = (events) => {
         if (events) {
           const blipContent = {
@@ -68,14 +90,15 @@ class ScheduleController {
       };
 
       return await User.findOne({
-        $and: [{ _id: id }, { 'schedule.clientPhone': clientPhone }],
+        $and: [{ _id: id }, { 'schedule.clientPhone': formattedClientPhone }],
       })
         .select('schedule')
         .then((user) => {
-          if (!user) sendDataError('Evento', res);
+          if (!user) return sendDataError('Evento', res);
 
           const events = user?.schedule.filter(
-            (eventSchedule) => eventSchedule.clientPhone === clientPhone
+            (eventSchedule) =>
+              eventSchedule.clientPhone === formattedClientPhone
           );
 
           const blipContent = listEventsBlipBuilder(events);
@@ -93,7 +116,11 @@ class ScheduleController {
   async create(req, res) {
     const { id } = req.auth;
     const { eventhours, service, eventdate } = req.body;
-    if (!id) sendDataError('Id do usuário', res);
+
+    const formattedClientPhone = formatPhoneNumber(req.body.clientPhone);
+
+    if (!id) return sendDataError('Id do usuário', res);
+    if (!formattedClientPhone) return sendDataError('Telefone inválido', res);
 
     const user = await User.findById(id).catch((error) =>
       errorHandler.reqErrors(error, res)
@@ -117,7 +144,7 @@ class ScheduleController {
           );
           const newEvent = {
             clientName: req.body.clientName,
-            clientPhone: req.body.clientPhone,
+            clientPhone: formattedClientPhone,
             service: req.body.service,
             professional: req.body.professional,
             from: formattedHours[0],
@@ -147,7 +174,7 @@ class ScheduleController {
   async createCustomEvent(req, res) {
     const { id } = req.auth;
     const { eventdate, eventstarthours, eventendhours } = req.body;
-    if (!id) sendDataError('Id do usuário', res);
+    if (!id) return sendDataError('Id do usuário', res);
 
     const user = await User.findById(id)
       .select('schedule')
@@ -195,7 +222,7 @@ class ScheduleController {
   async delete(req, res) {
     const { id } = req.auth;
     const { event } = req.params;
-    if (!id) sendDataError('Id do usuário', res);
+    if (!id) return sendDataError('Id do usuário', res);
 
     const user = await User.findById(id)
       .select('schedule')
@@ -220,7 +247,8 @@ class ScheduleController {
     const { id } = req.auth;
     const { oldEventId } = req.params;
     const { eventhours, service, eventdate } = req.body;
-    if (!id) sendDataError('Id do usuário', res);
+
+    if (!id) return sendDataError('Id do usuário', res);
 
     const user = await User.findById(id).catch((error) =>
       errorHandler.reqErrors(error, res)
