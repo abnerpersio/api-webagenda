@@ -4,24 +4,34 @@ const Group = mongoose.model('Group');
 
 const errorHandler = require('../functions/errorHandler');
 const { format } = require('../functions/formatter');
+const { hash } = require('../setup/crypto');
 
 class UserController {
   async show(req, res) {
     const { prop } = req.query;
 
     return await User.findById(req.params.id)
-      .then((user) => res.json(user?.[prop] ? user?.[prop] : user))
+      .then((resultUser) => { 
+        const { schedule, password, ...user } = resultUser.toJSON();
+        res.json(user?.[prop] ? user?.[prop] : user) 
+      })
       .catch((error) => errorHandler.reqErrors(error, res));
   }
 
   async create(req, res) {
-    return await User.create(req.body)
-      .then((user) => res.status(201).json(user))
+    const hashedPassword = await hash(req.body.password);
+
+    return await User.create({ ...req.body, password: hashedPassword })
+      .then((resultUser) => {
+        const { password, ...user } = resultUser.toJSON();
+        res.status(201).json(user);
+      })
       .catch((error) => errorHandler.reqErrors(error, res));
   }
 
   async update(req, res) {
-    const { groupName } = req.body;
+    const { password, groupName } = req.body;
+    
     if (groupName) {
       const group = await Group.findOne({ name: groupName });
       if (!group) {
@@ -29,19 +39,38 @@ class UserController {
       }
     }
 
+    if (password) {
+      const hashedPassword = await hash(password);
+      return await User.findByIdAndUpdate(req.params.id, { ...req.body, password: hashedPassword }, {
+        new: true,
+        runValidators: true,
+      })
+        .then((user) => {
+          const {
+            specialOpening,
+            schedule,
+            services,
+            password,
+            ...userUpdated
+          } = user.toObject();
+          res.json(userUpdated);
+        })
+        .catch((error) => errorHandler.reqErrors(error, res));
+    }
+
     return await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
     })
       .then((user) => {
-        const { specialOpening, schedule, services, ...userUpdated } =
-          user.toObject();
+        const { specialOpening, schedule, services, password, ...userUpdated } = user.toObject();
         res.json(userUpdated);
       })
       .catch((error) => errorHandler.reqErrors(error, res));
   }
 
   async findIdByName(req, res) {
+    // admin route
     return await User.findOne({ username: req.query.username })
       .then((user) => res.json({ id: user.id }))
       .catch((error) => errorHandler.reqErrors(error, res));

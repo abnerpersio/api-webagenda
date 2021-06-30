@@ -1,5 +1,6 @@
 module.exports = {
   reqErrors(error, callback) {
+    console.log(error);
     if (error.code == 11000) {
       return callback?.status(500)?.json({
         code: 11,
@@ -9,7 +10,7 @@ module.exports = {
     } else {
       return callback
         ?.status(500)
-        ?.json({ message: 'ocorreu um erro inesperado', error: error });
+        ?.json({ message: 'ocorreu um erro', error: error });
     }
   },
 

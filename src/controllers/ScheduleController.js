@@ -5,6 +5,8 @@ const {
 } = require('../functions/checkBlocking');
 
 const User = mongoose.model('User');
+const { paginateSchedule, filterDateSchedule } = require('../functions/paginate');
+const { format } = require('../functions/formatter');
 
 const errorHandler = require('../functions/errorHandler');
 const { notifier } = require('../functions/sender');
@@ -58,7 +60,7 @@ class ScheduleController {
 
   async list(req, res) {
     const { id } = req.auth;
-    const { clientPhone } = req.query;
+    const { clientPhone, dateRange } = req.query;
 
     if (!id) return sendDataError('Id do usuário', res);
 
@@ -104,12 +106,15 @@ class ScheduleController {
           const blipContent = listEventsBlipBuilder(events);
           return res.json(blipContent);
         })
-        .catch((error) => console.log('errado: ', error));
+        .catch((error) => errorHandler.reqErrors(error, res));
     }
 
     return await User.findById(id)
       .select('schedule')
-      .then((user) => res.json(user?.schedule))
+      .then((user) => {      
+        const filteredSchedule = paginateSchedule(user?.schedule, dateRange);
+        return res.json(filteredSchedule); 
+      })
       .catch((error) => errorHandler.reqErrors(error, res));
   }
 
@@ -126,15 +131,18 @@ class ScheduleController {
       errorHandler.reqErrors(error, res)
     );
 
+    const formattedDate = format(eventdate);
+    const filteredSchedule = filterDateSchedule(user.schedule, formattedDate);
+
     return await checkAndSendResponse(
-      eventdate,
+      formattedDate,
       eventhours,
       service,
       user.services,
       user.specialOpening,
       user.opening,
       user.closing,
-      user.schedule
+      filteredSchedule
     )
       .then((formattedHours) => {
         if (formattedHours) {
@@ -288,7 +296,6 @@ class ScheduleController {
             to: formattedHours[1],
           };
           user.schedule.push(newEvent);
-          //
           //
           user
             .save()
