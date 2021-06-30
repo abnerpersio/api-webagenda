@@ -1,37 +1,30 @@
 const crypto = require('crypto');
 require('dotenv').config();
 
-const algorithm = 'aes-256-ctr';
-const secretKey = process.env.CRYPTO_KEY;
-const iv = crypto.randomBytes(16);
+function hash(password) {
+  return new Promise((resolve, reject) => {
+    const salt = crypto.randomBytes(16).toString('hex');
 
-const encrypt = (text) => {
-  const cipher = crypto.createCipheriv(algorithm, secretKey, iv);
+    crypto.scrypt(password, salt, 64, (err, derivedKey) => {
+      if (err) reject(err.message);
+      resolve(salt + ':' + derivedKey.toString('hex'));
+    });
+  });
+}
 
-  const encrypted = Buffer.concat([cipher.update(text), cipher.final()]);
+function verifyPassword(password, hash) {
+  return new Promise((resolve, reject) => {
+    const [salt, key] = hash.split(':');
+    crypto.scrypt(password, salt, 64, (err, derivedKey) => {
+      if (err) reject(err);
 
-  return {
-    iv: iv.toString('hex'),
-    content: encrypted.toString('hex'),
-  };
-};
-
-const decrypt = (hash) => {
-  const decipher = crypto.createDecipheriv(
-    algorithm,
-    secretKey,
-    Buffer.from(hash.iv, 'hex')
-  );
-
-  const decrpyted = Buffer.concat([
-    decipher.update(Buffer.from(hash.content, 'hex')),
-    decipher.final(),
-  ]);
-
-  return decrpyted.toString();
-};
+      const keyBuffer = Buffer.from(key, 'hex');
+      resolve(crypto.timingSafeEqual(keyBuffer, derivedKey));
+    });
+  });
+}
 
 module.exports = {
-  encrypt,
-  decrypt,
+  hash,
+  verifyPassword,
 };

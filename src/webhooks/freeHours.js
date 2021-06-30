@@ -2,6 +2,7 @@ const checkers = require('../functions/checkers');
 const mongoose = require('mongoose');
 const errorHandler = require('../functions/errorHandler');
 const { format } = require('../functions/formatter');
+const { filterDateSchedule } = require('../functions/paginate');
 
 const User = mongoose.model('User');
 
@@ -16,12 +17,14 @@ module.exports = {
     if (!id) sendDataError('Id do usuário', res);
 
     return await User.findById(id)
-      .then((user) => {
+      .then(async (user) => {
         //
         if (!user) sendDataError('Informações', res);
         const formattedEventDate = format(eventdate);
         //
         const { services, specialOpening, opening, closing, schedule } = user;
+        const filteredSchedule = filterDateSchedule(schedule, formattedEventDate);
+        
         return checkers
           .returnFreeTimes(
             formattedEventDate,
@@ -30,7 +33,7 @@ module.exports = {
             specialOpening,
             opening,
             closing,
-            schedule
+            filteredSchedule
           )
           .then((response) => {
             const blipContent = {
