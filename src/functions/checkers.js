@@ -316,7 +316,7 @@ module.exports = {
         return sum;
       }
 
-      servicesArray = splitServices(serviceOption);
+      var servicesArray = splitServices(serviceOption);
       //
       let indexServices = [];
       servicesArray.forEach((item, index) => {

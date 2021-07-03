@@ -24,16 +24,21 @@ const port = process.env.PORT || 8080;
 app.use(cors());
 app.use(express.json());
 //  Sentry logger service
-app.use(Sentry.Handlers.requestHandler());
-app.use(Sentry.Handlers.tracingHandler());
+if (process.env.NODE_ENV !== 'dev') {
+  app.use(Sentry.Handlers.requestHandler());
+  app.use(Sentry.Handlers.tracingHandler());
+}
 //  Sentry logger service
 app.use(routes);
 
 //  Sentry error handler service
-app.use(Sentry.Handlers.errorHandler());
+if (process.env.NODE_ENV !== 'dev') {
+  app.use(Sentry.Handlers.errorHandler());
+}
 //  Sentry error handler service
 app.use((error, req, res, next) => {
   console.error(error);
+  console.log('deu ruim aqui', error)
   res.sendStatus(500);
 });
 

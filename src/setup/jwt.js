@@ -5,15 +5,15 @@ function getToken(getUser) {
     {
       data: getUser,
     },
-    'secret',
+    process.env.NODE_AUTH_TOKEN_JWT,
     { expiresIn: 60 * 60 * 24 * 7 }
   );
 
   return newToken;
 }
 
-function verifyToken() {
-  const decoded = jwt.verify(token, 'secret');
+function verifyToken(token) {
+  const decoded = jwt.verify(token, process.env.NODE_AUTH_TOKEN_JWT);
   return decoded.data;
 }
 

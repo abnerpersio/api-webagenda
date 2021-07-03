@@ -22,13 +22,13 @@ const adminVerify = (req, res, next) => {
 
 routes.get('/webhooks/chatid', getId);
 routes.get('/webhooks/services', getService);
-routes.post('/users', UserController.create);
 
 routes.use(authMiddleware);
 
 routes.get('/ping', (req, res) => res.send('pong!'));
 
 routes.get('/users', adminVerify, UserController.findIdByName);
+routes.post('/users', adminVerify, UserController.create);
 
 routes.get('/users/:id', UserController.show);
 routes.put('/users/:id', UserController.update);
