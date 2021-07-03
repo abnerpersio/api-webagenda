@@ -13,8 +13,50 @@ const sendDataError = (data, res) => {
 module.exports = {
   async getFreeHours(req, res) {
     const { id } = req.auth;
+    const { getJSON } = req.query;
     const { eventdate, serviceoption } = req.headers;
     if (!id) sendDataError('Id do usuário', res);
+
+    if (getJSON) {
+      return await User.findById(id)
+      .then(async (user) => {
+
+        if (!user) sendDataError('Informações', res);
+        const formattedEventDate = format(eventdate);
+        //
+        const { services, specialOpening, opening, closing, schedule } = user;
+        const filteredSchedule = filterDateSchedule(schedule, formattedEventDate);
+        
+        const {
+          specialOpeningArray,
+          openTime,
+          workingInfo,
+          closedTime,
+          scheduleArray,
+        } = checkers.formatHours(
+          formattedEventDate,
+          specialOpening,
+          opening,
+          closing,
+          schedule
+        );
+
+        return checkers.calculateFreeTimes(
+          specialOpeningArray,
+          openTime,
+          workingInfo,
+          scheduleArray,
+          closedTime
+        )
+        .then((freeTimes) => { 
+          return res.json(freeTimes);
+        })
+        .catch((error) => errorHandler.reqErrors(error, res));
+
+      })
+      .catch((error) => errorHandler.reqErrors(error, res));
+      return;
+    }
 
     return await User.findById(id)
       .then(async (user) => {

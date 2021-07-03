@@ -135,7 +135,7 @@ class ScheduleController {
     const filteredSchedule = filterDateSchedule(user.schedule, formattedDate);
 
     return await checkAndSendResponse(
-      formattedDate,
+      eventdate,
       eventhours,
       service,
       user.services,
@@ -158,8 +158,12 @@ class ScheduleController {
             from: formattedHours[0],
             to: formattedHours[1],
           };
+          
+          console.log('antes do push');
           user.schedule.push(newEvent);
+          console.log('depois do push');
           //
+          console.log({ id });
           user
             .save()
             .then((updated) => {
@@ -173,7 +177,8 @@ class ScheduleController {
               );
               return res.status(201).json(updated.schedule[indexEvent]);
             })
-            .catch((error) => errorHandler.reqErrors(error, res));
+            // .catch((error) => errorHandler.reqErrors(error, res));
+            .catch((error) => { console.log(error); res.sendStatus(500) });
         }
       })
       .catch((error) => errorHandler.reqErrors(error, res));
@@ -188,11 +193,14 @@ class ScheduleController {
       .select('schedule')
       .catch((error) => errorHandler.reqErrors(error, res));
 
+    const formattedDate = format(eventdate);
+    const filteredSchedule = filterDateSchedule(user.schedule,formattedDate);
+
     return await checkCustomEventAndSendResponse(
       eventdate,
       eventstarthours,
       eventendhours,
-      user.schedule
+      filteredSchedule
     )
       .then((formattedHours) => {
         if (formattedHours) {

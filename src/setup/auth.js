@@ -13,11 +13,12 @@ module.exports = {
       try {
         const decodedData = verifyToken(token);
 
-        if(decodedData.username !== username) {
-          return res.status(401).json({ message: 'NAO AUTENTICADO!' });
+        if (decodedData.username !== username) {
+          res.status(401).json({ message: 'NAO AUTENTICADO!' });
+          return;
         }
 
-        return await User.findById(decodedData.id)
+        await User.findById(decodedData.id)
           .then((authorized) => {
             if (authorized) {
               
@@ -32,20 +33,25 @@ module.exports = {
                 id: authorized._id,
               };
 
-              return next();
+              next();
+              return;
             } else {
-              return res.status(401).json({ message: 'NAO AUTENTICADO!' });
+              res.status(401).json({ message: 'NAO AUTENTICADO!' });
+              return;
             }
           })
-          .catch((error) => res.status(500).send(error));
+          .catch((error) => res.status(500).send(error) );
 
       } catch (err) {
         if (err.message === 'jwt expired') {
-          return res.status(401).send('NAO AUTENTICADO!');
+          res.status(401).send('NAO AUTENTICADO!');
+          return;
         }
         
-        res.sendStatus(500);
+        res.status(500).send('ocorreu um erro ao validar o seu token');
       }
+
+      return;
     }
     // auth with no token
     const { username, password } = req.headers;
@@ -67,9 +73,11 @@ module.exports = {
             id: user._id,
           };
 
-          return next();
+          next();
+          return;
         } else {
-          return res.status(403).json({ message: 'NAO AUTENTICADO!' });
+          res.status(403).json({ message: 'NAO AUTENTICADO!' });
+          return;
         }
       })
       .catch((error) => res.status(500).send(error));
@@ -77,15 +85,19 @@ module.exports = {
 
   async login(req, res) {
     if (req.query?.getdata) {
-      return res.json({
+      res.json({
         ...req.auth,
         ...req.data
       });
+
+      return;
     }
 
-    return res.json({
+    res.json({
       ...req.auth,
       token: req.token,
     });
+
+    return;
   },
 };

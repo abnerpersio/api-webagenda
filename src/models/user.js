@@ -130,6 +130,7 @@ const UserSchema = new mongoose.Schema(
   {
     _id: {
       type: String,
+      default: uuidv4()
     },
     username: {
       type: String,
@@ -157,9 +158,5 @@ const UserSchema = new mongoose.Schema(
     toObject: { virtuals: true, getters: true, setters: true },
   }
 );
-
-UserSchema.post('validate', function (doc) {
-  doc._id = uuidv4();
-});
 
 mongoose.model('User', UserSchema, 'users');
