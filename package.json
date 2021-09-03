@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "API",
   "main": "dist/index.js",
+  "engines": {
+    "node": "14.x"
+  },
   "scripts": {
     "build": "babel src --out-dir dist",
     "start": "npm run build && node ./dist/index.js",
