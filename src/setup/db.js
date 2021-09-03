@@ -1,19 +1,13 @@
-require('dotenv').config();
-const mongoose = require('mongoose');
+import '../bootstrap';
+import mongoose from 'mongoose';
 
-const dbuser = process.env.DBUSER;
-const dbpass = process.env.DBPASS;
-const dburl = process.env.DBURL;
-const uri = `mongodb+srv://${dbuser}:${dbpass}@${dburl}`;
+const uri = process.env.DB_URI;
 
 mongoose.connect(uri, {
   useNewUrlParser: true,
-  useFindAndModify: false,
   useCreateIndex: true,
   useUnifiedTopology: true,
-});
-
-require('../models/user');
-require('../models/group');
-const User = mongoose.model('User');
-const Group = mongoose.model('Group');
+  dbName: 'web_agenda',
+})
+  .then(() => console.log('Conectado ao MongoDB!'))
+  .catch(() => console.log('Erro ao conectar ao MongoDB'));

@@ -1,23 +1,18 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
-function getToken(getUser) {
+export const getToken = (getUser) => {
   const newToken = jwt.sign(
     {
       data: getUser,
     },
     process.env.NODE_AUTH_TOKEN_JWT,
-    { expiresIn: 60 * 60 * 24 * 7 }
+    { expiresIn: 60 * 60 * 24 * 7 },
   );
 
   return newToken;
-}
+};
 
-function verifyToken(token) {
+export const verifyToken = (token) => {
   const decoded = jwt.verify(token, process.env.NODE_AUTH_TOKEN_JWT);
   return decoded.data;
-}
-
-module.exports = {
-  getToken,
-  verifyToken
-}
+};
