@@ -1,8 +1,8 @@
-const mongoose = require('mongoose');
-const { v4: uuidv4 } = require('uuid');
-const moment = require('moment-timezone');
+import mongoose from 'mongoose';
+import { v4 as uuidv4 } from 'uuid';
+import moment from 'moment-timezone';
+import 'moment/locale/pt-br';
 
-require('moment/locale/pt-br');
 moment.tz.setDefault('America/Sao_Paulo');
 
 const HourOpeningSchema = new mongoose.Schema(
@@ -10,28 +10,28 @@ const HourOpeningSchema = new mongoose.Schema(
     working: { type: Boolean, default: true },
     from: {
       type: String,
-      required: [true, 'por favor adicione um horário valido'],
+      required: true,
     },
     to: {
       type: String,
-      required: [true, 'por favor adicione um horário valido'],
+      required: true,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const HourEventSchema = new mongoose.Schema(
   {
     from: {
       type: String,
-      required: [true, 'por favor adicione um horário valido'],
+      required: true,
     },
     to: {
       type: String,
-      required: [true, 'por favor adicione um horário valido'],
+      required: true,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const EventSchema = new mongoose.Schema({
@@ -41,7 +41,7 @@ const EventSchema = new mongoose.Schema({
   },
   clientName: {
     type: String,
-    required: [true, 'ei! faltou o nome do cliente'],
+    required: true,
   },
   clientPhone: String,
   service: {
@@ -50,15 +50,15 @@ const EventSchema = new mongoose.Schema({
   },
   professional: {
     type: String,
-    required: [true, 'ei! faltou um nome de profissional'],
+    required: false,
   },
   from: {
     type: String,
-    required: [true, 'por favor adicione um horário valido'],
+    required: true,
   },
   to: {
     type: String,
-    required: [true, 'por favor adicione um horário valido'],
+    required: true,
   },
   exclusionDate: {
     type: String,
@@ -66,11 +66,11 @@ const EventSchema = new mongoose.Schema({
   },
 });
 
-EventSchema.post('validate', function (doc) {
+EventSchema.post('validate', (doc) => {
   if (
     !moment(doc.exclusionDate, 'DD-MM-YYYY').isSame(
       moment(doc.from, 'DD-MM-YYYY HH:mm').add(60, 'days'),
-      'day'
+      'day',
     )
   ) {
     doc.exclusionDate = moment(doc.from, 'DD-MM-YYYY HH:mm')
@@ -78,8 +78,8 @@ EventSchema.post('validate', function (doc) {
       .format('DD-MM-YYYY');
   }
 
-  if (String(doc._id).length == 24) {
-    let newId = moment(doc.from, 'DD-MM-YYYY HH:mm').format('DD-MM-YYYY HH:mm');
+  if (String(doc._id).length === 24) {
+    const newId = moment(doc.from, 'DD-MM-YYYY HH:mm').format('DD-MM-YYYY HH:mm');
     doc._id = newId.concat(' ', String(doc.professional).toLowerCase());
   }
 });
@@ -88,34 +88,34 @@ const OpeningSchema = new mongoose.Schema(
   {
     seg: {
       type: HourOpeningSchema,
-      required: [true, 'preencha o campo segunda'],
+      required: true,
     },
     ter: {
       type: HourOpeningSchema,
-      required: [true, 'preencha o campo terça'],
+      required: true,
     },
     qua: {
       type: HourOpeningSchema,
-      required: [true, 'preencha o campo quarta'],
+      required: true,
     },
     qui: {
       type: HourOpeningSchema,
-      required: [true, 'preencha o campo quinta'],
+      required: true,
     },
     sex: {
       type: HourOpeningSchema,
-      required: [true, 'preencha o campo sexta'],
+      required: true,
     },
     sáb: {
       type: HourOpeningSchema,
-      required: [true, 'preencha o campo sabado'],
+      required: true,
     },
     dom: {
       type: HourOpeningSchema,
-      required: [true, 'preencha o campo domingo'],
+      required: true,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const ServiceSchema = new mongoose.Schema(
@@ -123,40 +123,78 @@ const ServiceSchema = new mongoose.Schema(
     serviceName: { type: String, lowercase: true, required: true },
     serviceTime: { type: String, required: true },
   },
-  { _id: false }
+  { _id: false },
 );
+
+const getDefaultOpening = () => ({
+  seg: {
+    from: '00:00',
+    to: '00:00',
+  },
+  ter: {
+    from: '00:00',
+    to: '00:00',
+  },
+  qua: {
+    from: '00:00',
+    to: '00:00',
+  },
+  qui: {
+    from: '00:00',
+    to: '00:00',
+  },
+  sex: {
+    from: '00:00',
+    to: '00:00',
+  },
+  sáb: {
+    from: '00:00',
+    to: '00:00',
+  },
+  dom: {
+    from: '00:00',
+    to: '00:00',
+  },
+});
 
 const UserSchema = new mongoose.Schema(
   {
     _id: {
       type: String,
-      default: uuidv4()
+      default: () => uuidv4(),
     },
     username: {
       type: String,
       lowercase: true,
       unique: true,
-      required: [true, 'digite um nome de usuário!'],
+      required: true,
     },
     password: {
       type: String,
       min: 6,
-      required: [true, 'digite uma senha!'],
+      required: true,
+      select: false,
+    },
+    role: {
+      type: String,
+      default: 'user',
     },
     professional: String,
     services: [ServiceSchema],
-    opening: OpeningSchema,
-    closing: OpeningSchema,
+    opening: {
+      type: OpeningSchema,
+      default: () => getDefaultOpening(),
+    },
+    closing: {
+      type: OpeningSchema,
+      default: () => getDefaultOpening(),
+    },
     specialOpening: [HourEventSchema],
     schedule: [EventSchema],
     groupName: String,
     notificationsToken: String,
     isAdmin: { type: Boolean, default: false, select: false },
   },
-  {
-    toJSON: { virtuals: true, getters: true, setters: true },
-    toObject: { virtuals: true, getters: true, setters: true },
-  }
 );
 
 mongoose.model('User', UserSchema, 'users');

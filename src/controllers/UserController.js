@@ -1,79 +1,83 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
+import { format } from '../shared/utils/formatter';
+import { hash } from '../setup/crypto';
+import UserService from '../services/UserService';
+
 const User = mongoose.model('User');
 const Group = mongoose.model('Group');
-
-const errorHandler = require('../functions/errorHandler');
-const { format } = require('../functions/formatter');
-const { hash } = require('../setup/crypto');
 
 class UserController {
   async show(req, res) {
     const { prop } = req.query;
 
-    return await User.findById(req.params.id)
-      .then((resultUser) => { 
-        const { schedule, password, ...user } = resultUser.toJSON();
-        res.json(user?.[prop] ? user?.[prop] : user) 
-      })
-      .catch((error) => errorHandler.reqErrors(error, res));
+    const resultUser = await User.findById(req.params.id);
+
+    const { schedule, password, ...user } = resultUser.toJSON();
+    res.json(user?.[prop] ? user?.[prop] : user);
+  }
+
+  async findIdByName(req, res) {
+    const user = await User.findOne({ username: req.query.username });
+
+    res.json({ id: user.id });
   }
 
   async create(req, res) {
     const hashedPassword = await hash(req.body.password);
 
-    return await User.create({ ...req.body, password: hashedPassword })
-      .then((resultUser) => {
-        const { password, ...user } = resultUser.toJSON();
-        res.status(201).json(user);
-      })
-      .catch((error) => errorHandler.reqErrors(error, res));
+    const userExists = await User.findOne({ username: req.body.username });
+
+    if (userExists) {
+      req.errorCode = 400;
+      throw new Error('User already exists');
+    }
+
+    const user = await UserService.create({ ...req.body, password: hashedPassword });
+
+    res.status(201).json(user);
   }
 
   async update(req, res) {
     const { password, groupName } = req.body;
-    
+
     if (groupName) {
       const group = await Group.findOne({ name: groupName });
+
       if (!group) {
-        return res.status(400).json({ message: 'este grupo não existe' });
+        req.errorCode = 400;
+        throw new Error('este grupo não existe');
       }
     }
 
     if (password) {
       const hashedPassword = await hash(password);
-      return await User.findByIdAndUpdate(req.params.id, { ...req.body, password: hashedPassword }, {
-        new: true,
-        runValidators: true,
-      })
-        .then((user) => {
-          const {
-            specialOpening,
-            schedule,
-            services,
-            password,
-            ...userUpdated
-          } = user.toObject();
-          res.json(userUpdated);
-        })
-        .catch((error) => errorHandler.reqErrors(error, res));
+
+      const user = await User.findByIdAndUpdate(
+        req.params.id,
+        { ...req.body, password: hashedPassword }, {
+          new: true,
+        },
+      );
+
+      const {
+        specialOpening,
+        schedule,
+        services,
+        ...userUpdated
+      } = user.toObject();
+
+      res.json(userUpdated);
     }
 
-    return await User.findByIdAndUpdate(req.params.id, req.body, {
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
-      runValidators: true,
-    })
-      .then((user) => {
-        const { specialOpening, schedule, services, password, ...userUpdated } = user.toObject();
-        res.json(userUpdated);
-      })
-      .catch((error) => errorHandler.reqErrors(error, res));
-  }
+    });
 
-  async findIdByName(req, res) {
-    // admin route
-    return await User.findOne({ username: req.query.username })
-      .then((user) => res.json({ id: user.id }))
-      .catch((error) => errorHandler.reqErrors(error, res));
+    const {
+      specialOpening, schedule, services, ...userUpdated
+    } = user.toObject();
+
+    res.json(userUpdated);
   }
 
   async addSpecialOpening(req, res) {
@@ -88,15 +92,12 @@ class UserController {
 
     user.specialOpening.push({ from: fullStartDate, to: fullEndDate });
 
-    return await user
-      .save()
-      .then((updated) => {
-        var index = updated?.specialOpening?.findIndex(
-          (item) => item?.from === fullStartDate && item?.to === fullEndDate
-        );
-        return res.json(updated.specialOpening[index]);
-      })
-      .catch((error) => errorHandler.reqErrors(error, res));
+    const updated = await user.save();
+
+    const index = updated?.specialOpening?.findIndex(
+      (item) => item?.from === fullStartDate && item?.to === fullEndDate,
+    );
+    return res.json(updated.specialOpening[index]);
   }
 
   async addService(req, res) {
@@ -108,32 +109,26 @@ class UserController {
       user.services.push(item);
     });
 
-    return await user
-      .save()
-      .then((updated) => {
-        return res.json(updated.services);
-      })
-      .catch((error) => errorHandler.reqErrors(error, res));
+    const updated = await user.save();
+    res.json(updated.services);
   }
 
   async newGroup(req, res) {
-    await Group.create(req.body)
-      .then((group) => {
-        res.json(group);
-      })
-      .catch((error) => errorHandler.reqErrors(error, res));
+    const group = await Group.create(req.body);
+    res.json(group);
   }
 
   async updateGroup(req, res) {
     const { groupId } = req.params;
-    if (!groupId) return res.status(400).status('digite um id do grupo');
 
-    await Group.findByIdAndUpdate(groupId, req.body, { new: true })
-      .then((updated) => {
-        res.json(updated);
-      })
-      .catch((error) => errorHandler.reqErrors(error, res));
+    if (!groupId) {
+      req.errorCode = 400;
+      throw new Error('digite um id do grupo');
+    }
+
+    const updated = await Group.findByIdAndUpdate(groupId, req.body, { new: true });
+    res.json(updated);
   }
 }
 
-module.exports = new UserController();
+export default new UserController();

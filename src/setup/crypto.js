@@ -1,30 +1,21 @@
-const crypto = require('crypto');
-require('dotenv').config();
+import crypto from 'crypto';
+import '../bootstrap';
 
-function hash(password) {
-  return new Promise((resolve, reject) => {
-    const salt = crypto.randomBytes(16).toString('hex');
+export const hash = (password) => new Promise((resolve, reject) => {
+  const salt = crypto.randomBytes(16).toString('hex');
 
-    crypto.scrypt(password, salt, 64, (err, derivedKey) => {
-      if (err) reject(err.message);
-      resolve(salt + ':' + derivedKey.toString('hex'));
-    });
+  crypto.scrypt(password, salt, 64, (err, derivedKey) => {
+    if (err) reject(err.message);
+    resolve(`${salt}:${derivedKey.toString('hex')}`);
   });
-}
+});
 
-function verifyPassword(password, hash) {
-  return new Promise((resolve, reject) => {
-    const [salt, key] = hash.split(':');
-    crypto.scrypt(password, salt, 64, (err, derivedKey) => {
-      if (err) reject(err);
+export const verifyPassword = (password, hashedPass) => new Promise((resolve, reject) => {
+  const [salt, key] = hashedPass.split(':');
+  crypto.scrypt(password, salt, 64, (err, derivedKey) => {
+    if (err) reject(err);
 
-      const keyBuffer = Buffer.from(key, 'hex');
-      resolve(crypto.timingSafeEqual(keyBuffer, derivedKey));
-    });
+    const keyBuffer = Buffer.from(key, 'hex');
+    resolve(crypto.timingSafeEqual(keyBuffer, derivedKey));
   });
-}
-
-module.exports = {
-  hash,
-  verifyPassword,
-};
+});

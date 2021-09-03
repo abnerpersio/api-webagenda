@@ -1,103 +1,95 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
+import moment from 'moment-timezone';
+import { getToken, verifyToken } from './jwt';
+import { verifyPassword } from './crypto';
+import { freeHoursJsonFormat } from '../shared/utils/freeHoursCalculate';
+import 'moment/locale/pt-br';
+
 const User = mongoose.model('User');
-const { getToken, verifyToken } = require('./jwt');
-const { verifyPassword } = require('./crypto');
 
-module.exports = {
-  async authMiddleware(req, res, next) {
-    // auth with token
-    if (req.headers.authorization) {
-      const { username, authorization } = req.headers;
-      const [, token] = authorization.split(' ');
+export const authMiddleware = async (req, res, next) => {
+  // auth with token
+  if (req.headers.authorization && req.headers['x-wa-username']) {
+    const { authorization } = req.headers;
+    const [, token] = authorization.split(' ');
 
-      try {
-        const decodedData = verifyToken(token);
+    try {
+      const decodedData = verifyToken(token);
 
-        if (decodedData.username !== username) {
-          res.status(401).json({ message: 'NAO AUTENTICADO!' });
-          return;
-        }
-
-        await User.findById(decodedData.id)
-          .then((authorized) => {
-            if (authorized) {
-              
-              req.data = {
-                schedule: authorized.schedule,
-                services: authorized.services,
-                professional: authorized.professional,
-              };
-
-              req.auth = {
-                username: authorized.username,
-                id: authorized._id,
-              };
-
-              next();
-              return;
-            } else {
-              res.status(401).json({ message: 'NAO AUTENTICADO!' });
-              return;
-            }
-          })
-          .catch((error) => res.status(500).send(error) );
-
-      } catch (err) {
-        if (err.message === 'jwt expired') {
-          res.status(401).send('NAO AUTENTICADO!');
-          return;
-        }
-        
-        res.status(500).send('ocorreu um erro ao validar o seu token');
+      if (decodedData.username !== req.headers['x-wa-username']) {
+        req.errorCode = 401;
+        throw new Error('credenciais invalidas');
       }
 
+      const authorized = await User.findById(decodedData.id);
+
+      if (authorized) {
+        const freeHours = await freeHoursJsonFormat({
+          userId: decodedData.id,
+          eventdate: moment().format('DD/MM/YYYY'),
+        });
+
+        req.auth = {
+          username: authorized.username,
+          id: authorized._id,
+          role: authorized.role,
+          token,
+          schedule: authorized.schedule,
+          services: authorized.services,
+          professional: authorized.professional,
+          freeHours,
+        };
+
+        next();
+        return;
+      }
+
+      req.errorCode = 401;
+      throw new Error('credenciais invalidas');
+    } catch (err) {
+      if (err.message === 'jwt expired' || req.errorCode === 401) {
+        req.errorCode = 401;
+        throw new Error('credenciais invalidas');
+      }
+
+      throw err;
+    }
+  }
+
+  // auth with no token
+  if (req.headers['x-wa-username'] && req.headers['x-wa-password']) {
+    const userExists = await User.findOne({
+      username: req.headers['x-wa-username'],
+    }).select('+password');
+
+    if (!userExists) {
+      req.errorCode = 400;
+      throw new Error('usuario não existe');
+    }
+
+    const authorized = await verifyPassword(req.headers['x-wa-password'], userExists.password);
+
+    if (authorized) {
+      req.auth = {
+        username: userExists.username,
+        id: userExists._id,
+        role: userExists.role,
+        token: getToken({
+          id: userExists._id,
+          username: userExists.username,
+        }),
+      };
+
+      next();
       return;
     }
-    // auth with no token
-    const { username, password } = req.headers;
 
-    return await User.findOne({
-      username,
-    })
-      .then(async (user) => {
-        const authorized = await verifyPassword(password, user.password);
+    req.statusCode = 401;
+    throw new Error('credenciais invalidas');
+  }
 
-        if (authorized) {
-          req.token = getToken({
-            id: user._id,
-            username: user.username
-          });
-
-          req.auth = {
-            username: user.username,
-            id: user._id,
-          };
-
-          next();
-          return;
-        } else {
-          res.status(403).json({ message: 'NAO AUTENTICADO!' });
-          return;
-        }
-      })
-      .catch((error) => res.status(500).send(error));
-  },
-
-  async login(req, res) {
-    if (req.query?.getdata) {
-      res.json({
-        ...req.auth,
-        ...req.data
-      });
-
-      return;
-    }
-
-    res.json({
-      ...req.auth,
-      token: req.token,
-    });
-
-    return;
-  },
+  req.statusCode = 400;
+  throw new Error('As credenciais estão faltando');
 };
+
+export const login = async (req, res) => res.json(req.auth);
