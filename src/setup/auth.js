@@ -67,7 +67,7 @@ export const authMiddleware = async (req, res, next) => {
       throw new Error('usuario não existe');
     }
 
-    const authorized = await verifyPassword(req.headers['x-wa-password'], userExists.password);
+    const authorized = verifyPassword(req.headers['x-wa-password'], userExists.password);
 
     if (authorized) {
       req.auth = {
