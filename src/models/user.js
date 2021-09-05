@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import moment from 'moment-timezone';
 import 'moment/locale/pt-br';
+import { hash } from '../setup/crypto';
 
 moment.tz.setDefault('America/Sao_Paulo');
 
@@ -174,6 +175,7 @@ const UserSchema = new mongoose.Schema(
       min: 6,
       required: true,
       select: false,
+      set: (e) => hash(e),
     },
     role: {
       type: String,

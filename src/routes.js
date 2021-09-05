@@ -26,9 +26,10 @@ routes.get('/webhooks/services', getService);
 
 routes.get('/ping', (req, res) => res.json({ success: true, message: 'pong!' }));
 
+// routes.post('/users', adminVerify, UserController.create);
+routes.post('/users', UserController.create);
 routes.use(authMiddleware);
 
-routes.post('/users', adminVerify, UserController.create);
 routes.get('/users', adminVerify, UserController.findIdByName);
 
 routes.get('/users/:id', UserController.show);
