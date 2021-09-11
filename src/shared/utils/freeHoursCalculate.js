@@ -1,8 +1,14 @@
 import mongoose from 'mongoose';
+import moment from 'moment-timezone';
+import 'moment/locale/pt-br';
 
 import { format } from './formatter';
 import { filterDateSchedule } from './paginate';
-import { calculateFreeTimes, formatHours, returnFreeTimes } from './checkers';
+import {
+  calculateFreeTimes, formatHours, returnFreeTimes,
+} from './checkers';
+
+moment.tz.setDefault('America/Sao_Paulo');
 
 const User = mongoose.model('User');
 

@@ -6,29 +6,29 @@ import ScheduleController from './controllers/ScheduleController';
 import { webhookGetFreeHours } from './shared/webhooks/freeHours';
 import { getId } from './shared/webhooks/getChatId';
 import { getService } from './shared/webhooks/services';
-import { authMiddleware, login } from './setup/auth';
+import AuthMiddleware from './shared/middlewares/auth';
 
 const routes = express.Router();
 
 const adminVerify = (req, res, next) => {
   if (req.auth.role !== 'admin') {
-    return res.status(401).json({
-      success: false,
-      messsage: 'Not allowed!',
-    });
+    req.errorCode = 401;
+    throw new Error('Não permitido!');
   }
 
   return next();
 };
+
+routes.options('*', (req, res) => res.sendStatus(200));
 
 routes.get('/webhooks/chatid', getId);
 routes.get('/webhooks/services', getService);
 
 routes.get('/ping', (req, res) => res.json({ success: true, message: 'pong!' }));
 
-// routes.post('/users', adminVerify, UserController.create);
-routes.post('/users', UserController.create);
-routes.use(authMiddleware);
+routes.post('/users', adminVerify, UserController.create);
+// routes.post('/users', UserController.create);
+routes.use(AuthMiddleware);
 
 routes.get('/users', adminVerify, UserController.findIdByName);
 
@@ -40,7 +40,7 @@ routes.post('/users/:id/services', UserController.addService);
 routes.post('/groups/', UserController.newGroup);
 routes.put('/groups/:groupId', UserController.updateGroup);
 
-routes.get('/login', login);
+routes.get('/login', async (req, res) => res.json(req.auth));
 
 routes.get('/events', ScheduleController.list);
 routes.get('/events/:event', ScheduleController.show);

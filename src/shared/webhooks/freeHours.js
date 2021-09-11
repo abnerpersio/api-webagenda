@@ -2,7 +2,7 @@ import { freeHoursBlipFormat, freeHoursJsonFormat } from '../utils/freeHoursCalc
 
 export const webhookGetFreeHours = async (req, res) => {
   const { id } = req.auth;
-  const { getJSON } = req.query;
+  const { format } = req.query;
   const { eventdate, serviceoption } = req.headers;
 
   if (!eventdate) {
@@ -10,7 +10,7 @@ export const webhookGetFreeHours = async (req, res) => {
     throw new Error('Data faltando');
   }
 
-  if (getJSON) {
+  if (format === 'json') {
     const freeTimes = await freeHoursJsonFormat({
       userId: id,
       eventdate,
