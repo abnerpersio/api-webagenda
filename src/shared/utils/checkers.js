@@ -18,14 +18,14 @@ const addTheServiceTime = (date, timeInMinute) => {
     .format(fullDateFormatPattern);
 };
 
-const checkBeetween = (comparingHours, hoursEvent) => hoursEvent.map((hour) => moment(hour, fullDateFormatPattern).isBetween(
+export const checkBetween = (comparingHours, hoursEvent) => hoursEvent.map((hour) => moment(hour, fullDateFormatPattern).isBetween(
   moment(comparingHours[0], fullDateFormatPattern),
   moment(comparingHours[1], fullDateFormatPattern),
   'minute',
   '[]',
 ));
 
-const checkBeetweenAndSame = (comparingHours, hoursEvent) => {
+const checkBetweenAndSame = (comparingHours, hoursEvent) => {
   const result = [];
   hoursEvent.map((hour, index) => {
     const firstItem = moment(hour, fullDateFormatPattern).isBetween(
@@ -118,27 +118,27 @@ const formatHours = (
 const checkSpecialWorking = (specialOpening, hoursEvent) => new Promise((resolve, reject) => {
   if (!specialOpening || !hoursEvent) reject(new Error('Parametros faltando!'));
   resolve(
-    specialOpening.map((time) => checkBeetween(time, hoursEvent)),
+    specialOpening.map((time) => checkBetween(time, hoursEvent)),
   );
 });
 
 // 2.
 const checkWorkingInHours = (hoursWorking, hoursEvent) => new Promise((resolve, reject) => {
   if (!hoursWorking || !hoursEvent) reject(new Error('Parametros faltando!'));
-  resolve(checkBeetween(hoursWorking, hoursEvent));
+  resolve(checkBetween(hoursWorking, hoursEvent));
 });
 
 // 3.
 const checkClosedInHours = (closedTime, hoursEvent) => new Promise((resolve, reject) => {
   if (!closedTime || !hoursEvent) reject(new Error('Parametros faltando!'));
-  resolve(checkBeetweenAndSame(closedTime, hoursEvent));
+  resolve(checkBetweenAndSame(closedTime, hoursEvent));
 });
 
 // 4.
 const checkEventBlocking = (schedule, hoursEvent) => new Promise((resolve, reject) => {
   if (!schedule || !hoursEvent) reject(new Error('Parametros faltando!'));
   resolve(
-    schedule.map((event) => checkBeetweenAndSame(event, hoursEvent)),
+    schedule.map((event) => checkBetweenAndSame(event, hoursEvent)),
   );
 });
 
@@ -163,64 +163,6 @@ const checkHours = async (
   function getSomeInArray(arr, cb) {
     return arr.map((item) => item.some(cb)).some(cb);
   }
-
-  // return moment(hoursEvent, fullDateFormatPattern).isBefore(moment())
-  //   ? { status: 500, response: 'este horário já passou' }
-  //   : checkSpecialWorking(specialOpening, hoursEvent)
-  //     .then((result) => {
-  //       const checkingArr = getSomeInArray(result, checkTrue);
-  //       if (checkingArr) {
-  //         return checkEventBlocking(schedule, hoursEvent)
-  //           .then((result) => {
-  //             const checkingArr = getSomeInArray(result, checkTrue);
-  //             if (checkingArr) {
-  //               return { status: 500, response: 'evento bloqueando' };
-  //             }
-  //             return { status: 200 };
-  //           })
-  //           .catch((error) => ({ status: 500, response: error }));
-  //       }
-  //       //
-  //       const dayEvent = moment(hoursEvent, fullDateFormatPattern).format(
-  //         dayFormatPattern,
-  //       );
-  //       if (!workingInfo[dayEvent].working) {
-  //         return { status: 500, response: 'não trabalha no dia' };
-  //       }
-  //       //
-  //       return checkWorkingInHours(openingTime, hoursEvent)
-  //         .then((result) => {
-  //           const checkingArr = result.every(checkTrue);
-  //           if (checkingArr) {
-  //             return checkClosedInHours(closedTime, hoursEvent)
-  //               .then((result) => {
-  //                 const checkingArr = result.every(checkFalse);
-  //                 if (checkingArr) {
-  //                   return checkEventBlocking(schedule, hoursEvent)
-  //                     .then((result) => {
-  //                       const checkingArr = getSomeInArray(result, checkTrue);
-  //                       if (checkingArr) {
-  //                         return {
-  //                           status: 500,
-  //                           response: 'evento bloqueando',
-  //                         };
-  //                       }
-  //                       return { status: 200 };
-  //                     })
-  //                     .catch((error) => ({ status: 500, response: error }));
-  //                 }
-  //                 return {
-  //                   status: 500,
-  //                   response: 'fechado nesse horário',
-  //                 };
-  //               })
-  //               .catch((error) => ({ status: 500, response: error }));
-  //           }
-  //           return { status: 500, response: 'fechados no horario' };
-  //         })
-  //         .catch((error) => ({ status: 500, response: error }));
-  //     })
-  //     .catch((error) => ({ status: 500, response: error }));
 
   if (moment(hoursEvent, fullDateFormatPattern).isBefore(moment())) {
     return { status: 500, response: 'este horário já passou' };
@@ -339,23 +281,38 @@ const calculateFreeTimes = (
 
   let freeTimes = [openingTime];
 
-  if (specialOpeningTime?.length > 0) {
-    specialOpeningTime?.map((specialOpening, indexSpecial) => {
-      if (
-        moment(specialOpening, fullDateFormatPattern).format(
-          dateFormatPattern,
-        )
-          === moment(openingTime[0], fullDateFormatPattern).format(
-            dateFormatPattern,
-          )
-      ) { freeTimes.push(specialOpening); }
+  specialOpeningTime?.map((specialOpening) => {
+    const checkIsSameDay = moment(specialOpening[0], fullDateFormatPattern).isSame(moment(openingTime[0], fullDateFormatPattern), 'day');
+
+    if (checkIsSameDay) {
+      freeTimes = [specialOpening];
+    }
+
+    return null;
+  });
+
+  if (closingTime?.length > 0) {
+    freeTimes.map((freeTime, indexFreeTimes) => {
+      const checkBlocking = checkBetween(freeTime, closingTime);
+      if (checkBlocking.some(checkTrue)) {
+        const arrayOrdered = orderArrayAndGetNew([
+          freeTime[0],
+          freeTime[1],
+          closingTime[0],
+          closingTime[1],
+        ]);
+        freeTimes[indexFreeTimes] = [arrayOrdered[0], arrayOrdered[1]];
+        freeTimes.push([arrayOrdered[2], arrayOrdered[3]]);
+      }
+
+      return null;
     });
   }
 
   if (schedule?.length > 0) {
-    schedule?.map((event, indexSchedule) => {
+    schedule?.map((event) => {
       freeTimes.map((freeTime, indexFreeTimes) => {
-        const checkBlocking = checkBeetween(freeTime, [
+        const checkBlocking = checkBetween(freeTime, [
           event[0],
           event[1],
         ]);
@@ -369,23 +326,11 @@ const calculateFreeTimes = (
           freeTimes[indexFreeTimes] = [arrayOrdered[0], arrayOrdered[1]];
           freeTimes.push([arrayOrdered[2], arrayOrdered[3]]);
         }
-      });
-    });
-  }
 
-  if (closingTime?.length > 0) {
-    freeTimes.map((freeTime, indexFreeTimes) => {
-      const checkBlocking = checkBeetween(freeTime, closingTime);
-      if (checkBlocking.some(checkTrue)) {
-        const arrayOrdered = orderArrayAndGetNew([
-          freeTime[0],
-          freeTime[1],
-          closingTime[0],
-          closingTime[1],
-        ]);
-        freeTimes[indexFreeTimes] = [arrayOrdered[0], arrayOrdered[1]];
-        freeTimes.push([arrayOrdered[2], arrayOrdered[3]]);
-      }
+        return null;
+      });
+
+      return null;
     });
   }
 
@@ -393,7 +338,28 @@ const calculateFreeTimes = (
     return arr[0] !== arr[1];
   }
 
+  function cleanDuplicatedFreeTimes(arr) {
+    const tmpArr = [];
+
+    arr.map((item, index) => {
+      const duplicatedWithAny = [];
+
+      for (let i = index + 1; i < arr.length; i += 1) {
+        const check = item === arr[i];
+        duplicatedWithAny.push(check);
+      }
+
+      if (duplicatedWithAny.every((bool) => !bool)) {
+        tmpArr.push(item);
+      }
+    });
+
+    return tmpArr;
+  }
+
   freeTimes = freeTimes.filter(checkSame);
+  freeTimes = cleanDuplicatedFreeTimes(freeTimes);
+
   resolve(freeTimes);
 });
 
@@ -472,8 +438,6 @@ const returnFreeTimes = async (
 
     if (durationInterval > serviceDuration) {
       const multiple = Math.round(durationInterval / serviceDuration);
-
-      console.log({ multiple });
 
       for (let i = 0; i < multiple; i += 1) {
         if (

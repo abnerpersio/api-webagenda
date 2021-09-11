@@ -1,13 +1,13 @@
 import mongoose from 'mongoose';
 import moment from 'moment-timezone';
-import { getToken, verifyToken } from './jwt';
-import { verifyPassword } from './crypto';
-import { freeHoursJsonFormat } from '../shared/utils/freeHoursCalculate';
+import { getToken, verifyToken } from '../../setup/jwt';
+import { verifyPassword } from '../../setup/crypto';
+import { freeHoursJsonFormat } from '../utils/freeHoursCalculate';
 import 'moment/locale/pt-br';
 
 const User = mongoose.model('User');
 
-export const authMiddleware = async (req, res, next) => {
+export default async function AuthMiddleware(req, res, next) {
   // auth with token
   if (req.headers.authorization && req.headers['x-wa-username']) {
     const { authorization } = req.headers;
@@ -67,7 +67,7 @@ export const authMiddleware = async (req, res, next) => {
       throw new Error('usuario não existe');
     }
 
-    const authorized = await verifyPassword(req.headers['x-wa-password'], userExists.password);
+    const authorized = verifyPassword(req.headers['x-wa-password'], userExists.password);
 
     if (authorized) {
       req.auth = {
@@ -84,12 +84,10 @@ export const authMiddleware = async (req, res, next) => {
       return;
     }
 
-    req.statusCode = 401;
+    req.errorCode = 401;
     throw new Error('credenciais invalidas');
   }
 
-  req.statusCode = 400;
+  req.errorCode = 400;
   throw new Error('As credenciais estão faltando');
-};
-
-export const login = async (req, res) => res.json(req.auth);
+}

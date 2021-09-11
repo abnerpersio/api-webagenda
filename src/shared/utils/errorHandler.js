@@ -1,7 +1,13 @@
+import * as Sentry from '@sentry/node';
+
 const errorsData = [
   {
     statusCode: 400,
-    message: 'Requisição inválida. tente novamente',
+    message: 'Requisição inválida.',
+  },
+  {
+    statusCode: 401,
+    message: 'Método não permitido pelo usuário',
   },
   {
     statusCode: 403,
@@ -9,9 +15,7 @@ const errorsData = [
   },
 ];
 
-export const errorHandler = (error, req, res) => {
-  console.log('erro', error);
-
+export default function ErrorHandler(error, req, res, next) {
   if (error.code === 11000) {
     res.status(500).json({
       code: 11,
@@ -26,8 +30,14 @@ export const errorHandler = (error, req, res) => {
     (errorObj) => errorObj.statusCode === req.errorCode,
   );
 
+  if (!errorData) {
+    console.log(error);
+    Sentry.captureException(error);
+  }
+
   res.status(errorData?.statusCode || 500).json({
     success: false,
-    debugData: errorData?.message ? `${errorData.message} ${error.message}` : error.message,
+    message: errorData?.message ? `${errorData.message} ${error.message}` : error.message,
+    sentry_code: Sentry.lastEventId(),
   });
-};
+}
