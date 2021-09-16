@@ -22,9 +22,3 @@ jobs:
       env:
         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
       run: heroku container:release -a ${{ secrets.STAGING_HEROKU_APP_NAME }} web 
-    - name: Comment in pull_request
-      uses: mb2dev/github-action-comment-pull-request@1.0.0
-      with:
-        message: "Deploy realizado em staging! Agora só testar"
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        reactions: "+1 | -1 | laugh | hooray | confused | heart | rocket | eyes"
