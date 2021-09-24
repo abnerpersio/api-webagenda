@@ -11,6 +11,7 @@ import { getService } from './shared/webhooks/services';
 import AuthMiddleware from './shared/middlewares/auth';
 import BlipMiddleware from './shared/middlewares/blip';
 import ChatController from './controllers/ChatController';
+import { getUser } from './shared/webhooks/getUser';
 
 const routes = express.Router();
 
@@ -25,13 +26,11 @@ const adminVerify = (req, res, next) => {
 
 routes.options('*', (req, res) => res.sendStatus(200));
 
-routes.get('/ping', (req, res) => {
-  console.log(req.headers.origin, req.ip);
-  res.json({ success: true, message: 'pong!' });
-});
+routes.get('/ping', (req, res) => res.json({ success: true, message: 'pong!' }));
 
 routes.get('/webhooks/chatid', getId);
 routes.get('/webhooks/services', getService);
+routes.get('/webhooks/user/:username', getUser);
 
 // Routes for blip use
 routes.get('/chat/events', BlipMiddleware, ChatController.list);
