@@ -9,12 +9,14 @@ import { getId } from './shared/webhooks/getChatId';
 import { getService } from './shared/webhooks/services';
 
 import AuthMiddleware from './shared/middlewares/auth';
+import BlipMiddleware from './shared/middlewares/blip';
+import ChatController from './controllers/ChatController';
 
 const routes = express.Router();
 
 const adminVerify = (req, res, next) => {
   if (req.auth.role !== 'admin') {
-    req.errorCode = 401;
+    req.errorCode = 403;
     throw new Error('Não permitido!');
   }
 
@@ -23,11 +25,22 @@ const adminVerify = (req, res, next) => {
 
 routes.options('*', (req, res) => res.sendStatus(200));
 
-routes.get('/ping', (req, res) => res.json({ success: true, message: 'pong!' }));
+routes.get('/ping', (req, res) => {
+  console.log(req.headers.origin, req.ip);
+  res.json({ success: true, message: 'pong!' });
+});
 
 routes.get('/webhooks/chatid', getId);
 routes.get('/webhooks/services', getService);
 
+// Routes for blip use
+routes.get('/chat/events', BlipMiddleware, ChatController.list);
+routes.get('/chat/events/:id', BlipMiddleware, ChatController.show);
+routes.post('/chat/events', BlipMiddleware, ChatController.create);
+routes.patch('/chat/events', BlipMiddleware, ChatController.update);
+routes.delete('/chat/events', BlipMiddleware, ChatController.delete);
+
+// Routes with Authentication
 routes.use(AuthMiddleware);
 
 routes.get('/webhooks/freehours', webhookGetFreeHours);
@@ -43,7 +56,7 @@ routes.post('/users/:id/services', UserController.addService);
 routes.post('/groups/', UserController.newGroup);
 routes.put('/groups/:groupId', UserController.updateGroup);
 
-routes.get('/login', async (req, res) => res.json(req.auth));
+routes.get('/login', (req, res) => res.json(req.auth));
 
 routes.get('/events', ScheduleController.list);
 routes.get('/events/:event', ScheduleController.show);
@@ -52,6 +65,6 @@ routes.put('/events/:event', ScheduleController.deleteAndCreateNew);
 routes.delete('/events/:event', ScheduleController.delete);
 routes.post('/custom/events', ScheduleController.createCustomEvent);
 
-routes.use('*', (req, res) => res.status(404).json({ message: 'Rota não encontrada!' }));
+routes.use('*', (req, res) => res.status(404).json({ message: 'Endpoint não encontrado' }));
 
 export default routes;

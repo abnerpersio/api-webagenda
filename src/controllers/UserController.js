@@ -116,7 +116,7 @@ class UserController {
     const { id } = req.auth;
     const user = await User.findById(id).select('services');
 
-    const { newServices } = req.body;
+    const { services: newServices } = req.body;
     newServices?.forEach((item) => {
       user.services.push(item);
     });
