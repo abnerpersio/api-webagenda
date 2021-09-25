@@ -7,6 +7,7 @@ import { format } from '../shared/utils/formatter';
 import { firebaseNotifier } from '../shared/utils/notifier';
 import ScheduleService from '../services/ScheduleService';
 import { listEventsBlipBuilder } from '../shared/utils/chatContent';
+import { freeHoursBlipFormat } from '../shared/utils/freeHoursCalculate';
 
 const User = mongoose.model('User');
 
@@ -137,6 +138,24 @@ class ChatController {
     });
 
     res.sendStatus(200);
+  }
+
+  async freeTimes(req, res) {
+    const userId = req.headers['x-wa-user-id'];
+    const { eventdate, serviceoption } = req.headers;
+
+    if (!eventdate) {
+      req.errorCode = 400;
+      throw new Error('Data faltando');
+    }
+
+    const blipContent = await freeHoursBlipFormat({
+      userId,
+      eventdate,
+      serviceoption,
+    });
+
+    return res.json(blipContent);
   }
 }
 
