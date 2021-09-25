@@ -38,7 +38,7 @@ routes.get('/chat/events/:id', BlipMiddleware, ChatController.show);
 routes.post('/chat/events', BlipMiddleware, ChatController.create);
 routes.patch('/chat/events', BlipMiddleware, ChatController.update);
 routes.delete('/chat/events', BlipMiddleware, ChatController.delete);
-routes.get('/chat/webhooks/freehours', BlipMiddleware, ChatController.freeHours);
+routes.get('/chat/webhooks/freehours', BlipMiddleware, ChatController.freeTimes);
 
 // Routes with Authentication
 routes.use(AuthMiddleware);
