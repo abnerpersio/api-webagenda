@@ -20,6 +20,7 @@ export default function LoggerMiddleware(req, res, next) {
     }
 
     const parsed = {
+      enviroment: process.env.NODE_ENVIROMENT,
       request: {
         ip: req.ip,
         path: req.originalUrl,
