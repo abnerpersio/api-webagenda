@@ -4,6 +4,13 @@ export default function LoggerMiddleware(req, res, next) {
   const oldSend = res.send;
 
   function serializeAndSendToLogger(payload) {
+    if (
+      !['staging', 'production'].includes(process.env.NODE_ENVIROMENT)
+    ) {
+      console.info('Logger middleware not added');
+      return;
+    }
+
     let parsedBody = {};
 
     try {
@@ -31,6 +38,7 @@ export default function LoggerMiddleware(req, res, next) {
       {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           user: process.env.LOGGER_USER,
           pass: process.env.LOGGER_PASS,
         },
