@@ -1,9 +1,13 @@
-export default function BlipMiddleware(req, res, next) {
-  const IPWhiteList = process.env.IP_WHITE_LIST;
+import crypto from 'crypto';
 
-  if (!IPWhiteList.includes(req.ip)) {
+export default function BlipMiddleware(req, res, next) {
+  const signature = process.env.BLIP_SIGNATURE;
+
+  const hashedSignature = crypto.createHash('sha256').update(signature).digest('hex');
+
+  if (req.headers['x-blip-signature'] !== hashedSignature) {
     req.errorCode = 403;
-    throw new Error('IP Not allowed');
+    throw new Error('Apenas contas permitidas podem acessar essa rota.');
   }
 
   next();
