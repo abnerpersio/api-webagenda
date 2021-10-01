@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: '14'
-          registry-url: http://registry.npmjs.org
+          registry-url: https://registry.yarnpkg.com
           
       - name: "Deploy to Vercel"
         run: |
