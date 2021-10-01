@@ -18,8 +18,8 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
-          node-version: '14'
-          registry-url: https://registry.yarnpkg.com
+          node-version: '12'
+          registry-url: https://registry.npmjs.com
       - name: "Deploy to Vercel"
         run: |
           prodRun=""
