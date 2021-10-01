@@ -4,8 +4,9 @@
   "description": "API",
   "main": "dist/index.js",
   "scripts": {
-    "build": "babel src --out-dir dist",
-    "start": "npm run build && node ./dist/index.js",
+    "compile": "babel src --out-dir dist",
+    "build": "npm run compile && node ./dist/index.js",
+    "start": "npm run compile && node ./dist/index.js",
     "dev": "nodemon --exec babel-node src/index",
     "test": "jest --detectOpenHandles",
     "test:watch": "jest --watch --detectOpenHandles --runInBand",
