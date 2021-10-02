@@ -2,6 +2,8 @@ import './setup/db';
 
 import { app } from './server';
 
-app.listen(process.env.PORT || 8080, () => {
-  console.info('Faça bom proveito do sistema de agendamentos 🚀📅💈');
+const PORT = process.env.PORT || 8080;
+
+app.listen(PORT, () => {
+  console.info(`Rodando na porta ${PORT} Faça bom proveito do sistema de agendamentos 🚀📅💈`);
 });
