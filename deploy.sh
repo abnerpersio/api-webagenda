@@ -1,3 +1,2 @@
-sudo git pull origin main
-sudo npm install
-sudo npm run start
+git pull origin main
+docker-compose up --build
