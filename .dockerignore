@@ -86,6 +86,7 @@ jspm_packages/
 # dotenv environment variables file
 .env
 .env.dev
+.env.example
 
 # next.js build output
 .next
@@ -97,3 +98,6 @@ lerna-debug.log
 .DS_Store
 Thumbs.db
 .vercel
+
+Procfile
+deploy.sh

@@ -6,5 +6,5 @@ const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, () => {
   console.info('Faça bom proveito do sistema de agendamentos 🚀📅💈');
-  console.info(`Rodando na porta ${PORT}`);
+  console.info(`Server rodando na porta ${PORT}`);
 });
