@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "babel src --out-dir dist",
-    "start": "npm run build && node ./dist/index.js",
+    "start": "npm run build && node dist/index.js",
+    "start:prod": "npm run build && pm2-runtime dist/index.js",
     "dev": "nodemon --exec babel-node src/index",
     "test": "jest --detectOpenHandles",
     "test:watch": "jest --watch --detectOpenHandles --runInBand",

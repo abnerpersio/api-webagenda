@@ -1,13 +1,20 @@
 import '../bootstrap';
 import mongoose from 'mongoose';
 
-const uri = process.env.DB_URI;
+const {
+  DB_URI, DB_USER, DB_PASS, DB_NAME,
+} = process.env;
 
-mongoose.connect(uri, {
+mongoose.connect(DB_URI, {
+  user: DB_USER,
+  pass: DB_PASS,
   useNewUrlParser: true,
   useCreateIndex: true,
   useUnifiedTopology: true,
-  dbName: 'web_agenda',
+  readPreference: 'primary',
+  w: 'majority',
+  authSource: 'admin',
+  dbName: DB_NAME,
 })
   .then(() => console.log('Conectado ao MongoDB!'))
   .catch(() => console.log('Erro ao conectar ao MongoDB'));
