@@ -7,7 +7,7 @@ export default function CorsMiddleware(req, res, next) {
 
   // if (isOriginWhiteListed) {
   // console.log(req.headers.origin);
-  res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Methods', '*');
   res.setHeader('Access-Control-Allow-Headers', '*');
   res.setHeader('Access-Control-Max-Age', '40');

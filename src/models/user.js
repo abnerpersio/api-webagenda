@@ -35,55 +35,45 @@ const HourEventSchema = new mongoose.Schema(
   { _id: false },
 );
 
-const EventSchema = new mongoose.Schema({
-  _id: {
-    type: String,
-    default: mongoose.Types.ObjectId(),
+const EventSchema = new mongoose.Schema(
+  {
+    _id: {
+      type: String,
+      default: mongoose.Types.ObjectId(),
+    },
+    uuid: {
+      type: String,
+      default: () => uuidv4(),
+    },
+    clientName: {
+      type: String,
+      required: true,
+    },
+    clientPhone: String,
+    service: {
+      type: String,
+      lowercase: true,
+    },
+    professional: {
+      type: String,
+      required: false,
+    },
+    from: {
+      type: String,
+      required: true,
+    },
+    to: {
+      type: String,
+      required: true,
+    },
+    exclusionDate: {
+      type: String,
+      default: () => moment().add(90, 'days').format('DD-MM-YYYY'),
+    },
+  }, {
+    timestamps: { createdAt: 'created_at', updatedAt: false },
   },
-  clientName: {
-    type: String,
-    required: true,
-  },
-  clientPhone: String,
-  service: {
-    type: String,
-    lowercase: true,
-  },
-  professional: {
-    type: String,
-    required: false,
-  },
-  from: {
-    type: String,
-    required: true,
-  },
-  to: {
-    type: String,
-    required: true,
-  },
-  exclusionDate: {
-    type: String,
-    default: moment().add(90, 'days').format('DD-MM-YYYY'),
-  },
-});
-
-EventSchema.post('validate', (doc) => {
-  if (
-    !moment(doc.exclusionDate, 'DD-MM-YYYY').isSame(
-      moment(doc.from, 'DD-MM-YYYY HH:mm').add(60, 'days'),
-      'day',
-    )
-  ) {
-    doc.exclusionDate = moment(doc.from, 'DD-MM-YYYY HH:mm')
-      .add(60, 'days')
-      .format('DD-MM-YYYY');
-  }
-
-  if (String(doc._id).length === 24) {
-    const newId = moment(doc.from, 'DD-MM-YYYY HH:mm').format('DD-MM-YYYY HH:mm');
-    doc._id = newId.concat(' ', String(doc.professional).toLowerCase());
-  }
-});
+);
 
 const OpeningSchema = new mongoose.Schema(
   {
@@ -195,7 +185,9 @@ const UserSchema = new mongoose.Schema(
     schedule: [EventSchema],
     groupName: String,
     notificationsToken: String,
-    isAdmin: { type: Boolean, default: false, select: false },
+  },
+  {
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
   },
 );
 

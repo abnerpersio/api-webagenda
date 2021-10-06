@@ -26,21 +26,19 @@ const formatPhoneNumber = (phoneNumber) => {
 class ScheduleController {
   async show(req, res) {
     const { id } = req.auth;
-    const { event } = req.params;
+    const { event: eventId } = req.params;
     const { professional } = req.query;
-    if (!event) return sendDataError('Evento', res);
     if (!professional) return sendDataError('Profissional', res);
 
-    const idEvent = String(event).concat(' ', professional);
     const user = await User.findOne({
-      $and: [{ _id: id }, { 'schedule._id': idEvent }],
+      $and: [{ _id: id }, { 'schedule._id': eventId }],
     })
       .select('schedule');
 
     if (!user) return sendDataError('Evento', res);
 
     const indexShow = user.schedule.findIndex(
-      (eventSchedule) => eventSchedule._id === idEvent,
+      (eventSchedule) => eventSchedule._id === eventId,
     );
     return res.json(user.schedule[indexShow]);
   }

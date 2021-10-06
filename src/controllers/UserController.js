@@ -17,8 +17,8 @@ class UserController {
     const resultUser = await User.findById(id);
 
     if (!resultUser) {
-      res.sendStatus(404);
-      return;
+      req.errorCode = 400;
+      throw new Error('Usuário não encontrado');
     }
 
     const { schedule, password, ...user } = resultUser.toObject();
@@ -36,7 +36,7 @@ class UserController {
 
     if (userExists) {
       req.errorCode = 400;
-      throw new Error('User already exists');
+      throw new Error('Usuário já existe');
     }
 
     const user = await UserService.create(req.body);
@@ -116,7 +116,7 @@ class UserController {
     const { id } = req.auth;
     const user = await User.findById(id).select('services');
 
-    const { newServices } = req.body;
+    const { services: newServices } = req.body;
     newServices?.forEach((item) => {
       user.services.push(item);
     });

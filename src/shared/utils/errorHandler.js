@@ -7,11 +7,11 @@ const errorsData = [
   },
   {
     statusCode: 401,
-    message: 'Método não permitido pelo usuário',
+    message: 'Não autorizado',
   },
   {
     statusCode: 403,
-    message: 'Não autorizado',
+    message: 'Sem permissão',
   },
 ];
 
