@@ -2,9 +2,11 @@ version: "3.0"
 
 services:
   web:
-    build: .
+    build:
+      dockerfile: ./.docker/web/Dockerfile
+      context: .
     ports:
-      - "80:80"
+      - "8080:80"
     environment:
       PORT: 80
       NODE_ENVIROMENT: production
@@ -13,7 +15,31 @@ services:
       DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASS}
       DB_URI: ${DB_URI}
+      DB_NAME: ${DB_NAME}
       NOTIFICATIONS_TOKEN: ${NOTIFICATIONS_TOKEN}
       LOGGER_USER: ${LOGGER_USER}
       LOGGER_PASS: ${LOGGER_PASS}
       BLIP_SIGNATURE: ${BLIP_SIGNATURE}
+    networks:
+      default:
+        aliases:
+          - api
+  
+  nginx: 
+    build:
+      dockerfile: ./.docker/nginx/Dockerfile
+      context: .
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    restart: always
+    volumes:
+      - ./.docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - web
+    networks:
+      - default
+
+
+networks:
+   default:
