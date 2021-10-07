@@ -394,17 +394,11 @@ const returnFreeTimes = async (
   }
 
   function calculateDurations(arr) {
-    // let sum = 0;
-
-    // arr.forEach(
-    //   (itemIndex) => {
-    //     sum += Number(services[itemIndex].serviceTime);
-    //   },
-    // );
-
-    // return sum;
     return arr.reduce(
-      (acc, curr, index) => acc + Number(services[index].serviceTime), 0,
+      (acc, curr, index) => {
+        const serviceIndex = arr[index];
+        return acc + Number(services[serviceIndex].serviceTime);
+      }, 0,
     );
   }
 
@@ -412,6 +406,10 @@ const returnFreeTimes = async (
   const indexServices = servicesArray.map((item) => services.findIndex(
     (serviceSaved) => serviceSaved.serviceName === item,
   ));
+
+  if (indexServices.includes(-1)) {
+    throw new Error('Service not found');
+  }
 
   const serviceDuration = String(calculateDurations(indexServices));
 
