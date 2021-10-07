@@ -1,2 +1,2 @@
 git pull origin main
-docker-compose up --build
+docker-compose up --build -d
