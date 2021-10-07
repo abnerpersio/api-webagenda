@@ -38,6 +38,6 @@ export default function ErrorHandler(error, req, res, next) {
   res.status(errorData?.statusCode || 500).json({
     success: false,
     message: errorData?.message ? `${errorData.message} ${error.message}` : error.message,
-    sentry_code: Sentry.lastEventId(),
+    sentry_code: errorData ? null : Sentry.lastEventId(),
   });
 }
