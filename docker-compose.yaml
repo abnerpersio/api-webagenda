@@ -9,8 +9,8 @@ services:
       - "8080:80"
     environment:
       PORT: 80
-      NODE_ENVIROMENT: production
-      SENTRY_ENVIROMENT: production
+      NODE_ENVIROMENT: ${NODE_ENVIROMENT}
+      SENTRY_ENVIROMENT: ${NODE_ENVIROMENT}
       NODE_AUTH_TOKEN_JWT: ${NODE_AUTH_TOKEN_JWT}
       DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASS}
