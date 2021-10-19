@@ -10,15 +10,16 @@ export const getService = async (req, res) => {
     throw new Error('por favor digite um nome de usuário');
   }
 
-  const users = await User.find({ groupName: username })
+  const users = await User.find({ username })
     .select('services');
-  const allServices = [];
+
+  let allServices = [];
 
   users.forEach((user) => {
-    user?.services?.forEach((service) => {
-      const { serviceName, serviceTime } = service;
-      allServices.push({ serviceName, serviceTime });
-    });
+    allServices = user?.services?.map((service) => ({
+      serviceName: service.serviceName,
+      serviceTime: service.serviceTime,
+    }));
   });
 
   return res.json(allServices);
