@@ -25,6 +25,12 @@ export const checkBetween = (comparingHours, hoursEvent) => hoursEvent.map((hour
   '[]',
 ));
 
+const checkBetweenWithoutBorders = (comparingHours, hoursEvent) => hoursEvent.map((hour) => moment(hour, fullDateFormatPattern).isBetween(
+  moment(comparingHours[0], fullDateFormatPattern),
+  moment(comparingHours[1], fullDateFormatPattern),
+  'minute',
+));
+
 const checkBetweenAndSame = (comparingHours, hoursEvent) => {
   const result = [];
   hoursEvent.map((hour, index) => {
@@ -293,8 +299,9 @@ const calculateFreeTimes = (
 
   if (closingTime?.length > 0) {
     freeTimes.map((freeTime, indexFreeTimes) => {
-      const checkBlocking = checkBetween(freeTime, closingTime);
-      if (checkBlocking.some(checkTrue)) {
+      const checkBlockingWithoutBorders = checkBetweenWithoutBorders(freeTime, closingTime);
+
+      if (checkBlockingWithoutBorders.some(checkTrue)) {
         const arrayOrdered = orderArrayAndGetNew([
           freeTime[0],
           freeTime[1],
