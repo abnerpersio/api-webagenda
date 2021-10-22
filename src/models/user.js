@@ -38,8 +38,8 @@ const HourEventSchema = new mongoose.Schema(
 const EventSchema = new mongoose.Schema(
   {
     _id: {
-      type: String,
-      default: mongoose.Types.ObjectId(),
+      type: mongoose.Types.ObjectId,
+      default: () => mongoose.Types.ObjectId(),
     },
     uuid: {
       type: String,
