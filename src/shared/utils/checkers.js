@@ -418,7 +418,7 @@ const returnFreeTimes = async (
     throw new Error('Service not found');
   }
 
-  const serviceDuration = String(calculateDurations(indexServices));
+  const serviceDuration = Number(calculateDurations(indexServices));
 
   const freeTimes = await calculateFreeTimes(
     specialOpeningArray,
@@ -457,6 +457,13 @@ const returnFreeTimes = async (
           );
         }
       }
+    }
+
+    if (durationInterval === serviceDuration) {
+      freeUniqueHours.push(
+        moment(freeTime[0], fullDateFormatPattern)
+          .format(fullDateFormatPattern),
+      );
     }
 
     return null;
