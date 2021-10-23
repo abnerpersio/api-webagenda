@@ -153,7 +153,8 @@ class ScheduleController {
       firebaseNotifier({
         title: 'Um cliente acaba de fazer um agendamento!',
         message: 'confira agora mesmo.',
-        notificationToken: user.notificationsToken,
+        // notificationToken: user.notificationsToken,
+        notificationToken: 'dDiLYxn6DbJOAfCMld-Isr:APA91bHjlpg5JdhQZVmTrfZ-Vcb3RdyzrhAxN9NemDTwf9mVq03JG6oOcqLgYqdhJQQ1GNRDg5hQAhK4ctjfnLrJ6jTFvM--GjYoNvEQ_XuAb11fEmSv22OvQ1lHh7ng0Ag46fC1pZNZ',
       });
 
       res.status(201).json(updated.schedule[indexEvent]);

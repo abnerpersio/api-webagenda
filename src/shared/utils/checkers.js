@@ -367,6 +367,8 @@ const calculateFreeTimes = (
   freeTimes = freeTimes.filter(checkSame);
   freeTimes = cleanDuplicatedFreeTimes(freeTimes);
 
+  console.log({ openingTime });
+
   resolve(freeTimes);
 });
 
